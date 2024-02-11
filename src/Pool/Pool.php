@@ -112,4 +112,19 @@ class Pool {
     $packages = $this->getPackageVersions($name);
     return reset($packages) ?: null;
   }
+
+  /**
+   * Ensure package IDs.
+   * This is useful for ensuring that each package has a unique ID.
+   */
+  public function ensurePackageIds(): void {
+    $id = 1;
+    foreach ($this->getPackages() as $package) {
+      if ($package->getId()) {
+        continue;
+      }
+
+      $package->setId($id++);
+    }
+  }
 }

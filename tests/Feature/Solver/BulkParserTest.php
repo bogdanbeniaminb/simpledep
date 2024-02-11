@@ -3,6 +3,7 @@
 use SimpleDep\Package\Package;
 use SimpleDep\Solver\BulkParser;
 use SimpleDep\Pool\Pool;
+use SimpleDep\Requests\ParsedRequestsCollection;
 use SimpleDep\Requests\Request;
 use SimpleDep\Requests\RequestsCollection;
 use SimpleDep\Solver\Exceptions\ParserException;
@@ -70,7 +71,7 @@ it('parses dependencies', function () {
 
   // Check if the solutions contain the expected requests.
   foreach ($solutions as $solution) {
-    expect($solution)->toBeInstanceOf(RequestsCollection::class)
+    expect($solution)->toBeInstanceOf(ParsedRequestsCollection::class)
       ->and($solution->contains('foo'))->toBeTrue()
       ->and($solution->contains('boo'))->toBeTrue()
       ->and($solution->contains('baz'))->toBeTrue()

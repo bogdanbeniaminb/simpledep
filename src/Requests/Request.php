@@ -68,4 +68,18 @@ class Request {
       'versionConstraint' => $this->versionConstraint ? (string) $this->versionConstraint : null,
     ];
   }
+
+  /**
+   * Create a new request from a request
+   *
+   * @param Request $request
+   * @return static
+   */
+  public static function fromRequest(Request $request): static {
+    return new static(
+      $request->getType(),
+      $request->getName(),
+      $request->getVersionConstraint(),
+    );
+  }
 }

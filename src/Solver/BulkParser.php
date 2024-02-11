@@ -6,6 +6,7 @@ namespace SimpleDep\Solver;
 
 use RuntimeException;
 use SimpleDep\Pool\Pool;
+use SimpleDep\Requests\ParsedRequestsCollection;
 use SimpleDep\Requests\Request;
 use SimpleDep\Requests\RequestsCollection;
 use SimpleDep\Solver\Exceptions\ParserException;
@@ -37,13 +38,6 @@ class BulkParser {
   protected RequestsCollection $requests;
 
   /**
-   * The requests after parsing.
-   *
-   * @var RequestsCollection
-   */
-  protected RequestsCollection $parsedRequests;
-
-  /**
    * Whether to throw exceptions or not.
    *
    * @var bool
@@ -56,6 +50,7 @@ class BulkParser {
     array $installed = []
   ) {
     $this->pool = $pool;
+    $this->pool->ensurePackageIds();
     $this->installed = $installed;
     $this->requests = $requests;
   }
@@ -74,11 +69,20 @@ class BulkParser {
   /**
    * Parse the dependencies
    *
-   * @return RequestsCollection[]
+   * @return ParsedRequestsCollection[]
    * @throws ParserException
    */
   public function parse(): array {
-    return $this->parseRequests($this->requests);
+    $solutions = $this->parseRequests($this->requests);
+    $solutions = array_filter($solutions, function (ParsedRequestsCollection $solution) {
+      return (new RequestCompatibilityChecker($solution, $this->installed))->check();
+    });
+
+    if (!count($solutions) && $this->throwExceptions) {
+      throw ParserException::noSolution();
+    }
+
+    return array_values($solutions);
   }
 
   /**
@@ -86,7 +90,7 @@ class BulkParser {
    * Uses backtracking to solve the dependencies.
    *
    * @param RequestsCollection $requests
-   * @return RequestsCollection[] Possible solutions.
+   * @return ParsedRequestsCollection[] Possible solutions.
    */
   protected function parseRequests(RequestsCollection $requests): array {
     if (!count($requests)) {
@@ -113,7 +117,7 @@ class BulkParser {
    * Try to parse a request.
    *
    * @param Request $request
-   * @return RequestsCollection[] Possible solutions.
+   * @return ParsedRequestsCollection[] Possible solutions.
    */
   protected function parseRequest(
     Request $request
@@ -139,7 +143,7 @@ class BulkParser {
    *
    * @param non-empty-string $name
    * @param Constraint|null $versionConstraint
-   * @return RequestsCollection[]
+   * @return ParsedRequestsCollection[]
    * @throws ParserException
    */
   protected function parseInstallRequest(
@@ -154,8 +158,8 @@ class BulkParser {
     $solutions = [];
     foreach ($packages as $package) {
       try {
-        $requests = new RequestsCollection();
-        $requests->install($name, Constraint::parse((string) $package->getVersion()));
+        $requests = new ParsedRequestsCollection();
+        $requests->install($package);
 
         $links = $package->getLinks();
         $linkRequests = new RequestsCollection();
@@ -198,7 +202,7 @@ class BulkParser {
    *
    * @param non-empty-string $name
    * @param Constraint|null $versionConstraint
-   * @return RequestsCollection[]
+   * @return ParsedRequestsCollection[]
    * @throws ParserException
    */
   protected function parseUpdateRequest(
@@ -213,9 +217,9 @@ class BulkParser {
    * Try to parse an uninstall request.
    *
    * @param non-empty-string $name
-   * @return RequestsCollection[]
+   * @return ParsedRequestsCollection[]
    */
   protected function parseUninstallRequest(string $name): array {
-    return [(new RequestsCollection())->uninstall($name)];
+    return [(new ParsedRequestsCollection())->uninstall($name)];
   }
 }
