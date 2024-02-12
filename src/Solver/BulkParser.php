@@ -82,6 +82,12 @@ class BulkParser {
       throw ParserException::noSolution();
     }
 
+    // Sort the solution steps by their dependencies.
+    $solutions = array_map(
+      fn (ParsedRequestsCollection $solution) => (new DependencySorter($solution, $this->pool, $this->installed))->sort(),
+      $solutions
+    );
+
     return array_values($solutions);
   }
 

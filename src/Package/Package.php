@@ -50,7 +50,7 @@ class Package {
    * @var array<non-empty-string, array{
    *   type: string,
    *   name: string,
-   *   versionConstraint?: Constraint,
+   *   versionConstraint?: Constraint|null,
    * }>
    */
   protected array $links = [];
@@ -129,7 +129,7 @@ class Package {
    * @return array<non-empty-string, array{
    *   type: string,
    *   name: string,
-   *   versionConstraint?: string,
+   *   versionConstraint?: Constraint|null,
    * }>
    */
   public function getLinks(): array {

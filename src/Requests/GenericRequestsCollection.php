@@ -32,6 +32,15 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
   protected string $requestClass = Request::class;
 
   /**
+   * Create a new collection
+   *
+   * @param TRequest[] $requests
+   */
+  public function __construct(array $requests = []) {
+    $this->requests = $requests;
+  }
+
+  /**
    * Add a request
    *
    * @param TRequest $request
@@ -164,5 +173,26 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
       $this->requests,
       static fn (Request $request) => $request->getName() === $name && ($type === null || $request->getType() === $type)
     ));
+  }
+
+  /**
+   * Make the requests unique.
+   *
+   * @return static
+   */
+  public function unique(): static {
+    /** @var TRequest[] $newRequests */
+    $newRequests = [];
+    foreach ($this->requests as $request) {
+      foreach ($newRequests as $newRequest) {
+        if (json_encode($newRequest->toArray()) === json_encode($request->toArray())) {
+          continue 2;
+        }
+      }
+
+      $newRequests[] = $request;
+    }
+
+    return new static($newRequests);
   }
 }

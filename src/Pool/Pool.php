@@ -118,7 +118,7 @@ class Pool {
    * This is useful for ensuring that each package has a unique ID.
    */
   public function ensurePackageIds(): void {
-    $id = 1;
+    $id = $this->getMaxPackageId() + 1;
     foreach ($this->getPackages() as $package) {
       if ($package->getId()) {
         continue;
@@ -126,5 +126,40 @@ class Pool {
 
       $package->setId($id++);
     }
+  }
+
+  /**
+   * Get the maximum package ID
+   *
+   * @return int
+   */
+  protected function getMaxPackageId(): int {
+    $packages = $this->getPackages();
+    if (empty($packages)) {
+      return 0;
+    }
+
+    return max(
+      array_map(
+        static fn (Package $package) => $package->getId() ?: 0,
+        $packages
+      )
+    );
+  }
+
+  /**
+   * Get a package by ID
+   *
+   * @param int $id
+   * @return Package|null
+   */
+  public function getPackageById(int $id): ?Package {
+    foreach ($this->getPackages() as $package) {
+      if ($package->getId() === $id) {
+        return $package;
+      }
+    }
+
+    return null;
   }
 }

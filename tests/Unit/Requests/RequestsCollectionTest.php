@@ -69,3 +69,21 @@ it('can act as a iterator', function () {
     ['type' => Request::TYPE_UPDATE, 'name' => 'boo', 'versionConstraint' => '>=1.0.0'],
   ]);
 });
+
+it('can remove duplicates', function () {
+  $requests = new RequestsCollection();
+  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', '>=2.0.0')
+    ->install('baz')
+    ->update('boo', '>=1.0.0');
+  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', '>=2.0.0')
+    ->install('baz')
+    ->update('boo', '>=1.0.0');
+  expect($requests->toArray())->toMatchArray([
+    ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=1.0.0'],
+    ['type' => Request::TYPE_UPDATE, 'name' => 'bar', 'versionConstraint' => null],
+    ['type' => Request::TYPE_UNINSTALL, 'name' => 'baz', 'versionConstraint' => null],
+    ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=2.0.0'],
+    ['type' => Request::TYPE_INSTALL, 'name' => 'baz', 'versionConstraint' => '>=0.0.0'],
+    ['type' => Request::TYPE_UPDATE, 'name' => 'boo', 'versionConstraint' => '>=1.0.0'],
+  ]);
+});
