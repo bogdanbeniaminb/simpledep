@@ -29,7 +29,7 @@ class Request {
   public function __construct(
     protected int $type,
     protected string $name,
-    $versionConstraint = null,
+    $versionConstraint = null
   ) {
     if (!empty($versionConstraint)) {
       if (is_string($versionConstraint)) {
@@ -65,7 +65,9 @@ class Request {
     return [
       'type' => $this->type,
       'name' => $this->name,
-      'versionConstraint' => $this->versionConstraint ? (string) $this->versionConstraint : null,
+      'versionConstraint' => $this->versionConstraint
+        ? (string) $this->versionConstraint
+        : null,
     ];
   }
 
@@ -79,7 +81,7 @@ class Request {
     return new static(
       $request->getType(),
       $request->getName(),
-      $request->getVersionConstraint(),
+      $request->getVersionConstraint()
     );
   }
 }

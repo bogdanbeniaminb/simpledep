@@ -123,7 +123,6 @@ class DependencySorter {
    * @return int[] The dependencies
    */
   protected function gatherDependencies(array $requestData): array {
-
     $request = $requestData['request'];
     if ($request->getType() === ParsedRequest::TYPE_UNINSTALL) {
       return [];
@@ -139,7 +138,11 @@ class DependencySorter {
     $links = $package->getLinks();
     foreach ($links as $link) {
       if ($link['type'] === 'require') {
-        $id = $this->getRequestId($link['name'], ParsedRequest::TYPE_INSTALL, $link['versionConstraint']);
+        $id = $this->getRequestId(
+          $link['name'],
+          ParsedRequest::TYPE_INSTALL,
+          $link['versionConstraint']
+        );
         if (!$id) {
           // Check if the package is installed.
           $installed = $this->installed[$link['name']] ?? null;
@@ -150,7 +153,11 @@ class DependencySorter {
 
         $dependencies[] = $id;
       } elseif (in_array($link['type'], ['conflict', 'replace'])) {
-        $id = $this->getRequestId($link['name'], ParsedRequest::TYPE_UNINSTALL, $link['versionConstraint']);
+        $id = $this->getRequestId(
+          $link['name'],
+          ParsedRequest::TYPE_UNINSTALL,
+          $link['versionConstraint']
+        );
         if (!$id) {
           continue;
         }
@@ -169,7 +176,11 @@ class DependencySorter {
    * @param Constraint|null $versionConstraint The version constraint
    * @return int|null The request ID
    */
-  protected function getRequestId(string $name, ?int $type = null, ?Constraint $versionConstraint = null): ?int {
+  protected function getRequestId(
+    string $name,
+    ?int $type = null,
+    ?Constraint $versionConstraint = null
+  ): ?int {
     foreach ($this->requestsData as $requestData) {
       $request = $requestData['request'];
       if ($request->getName() !== $name) {
@@ -182,7 +193,11 @@ class DependencySorter {
       }
 
       // Check the version constraint.
-      if ($versionConstraint !== null && (!$request->getVersion() || !$versionConstraint->isSatisfiedBy($request->getVersion()))) {
+      if (
+        $versionConstraint !== null &&
+        (!$request->getVersion() ||
+          !$versionConstraint->isSatisfiedBy($request->getVersion()))
+      ) {
         continue;
       }
 

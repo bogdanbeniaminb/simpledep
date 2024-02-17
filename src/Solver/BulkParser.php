@@ -84,7 +84,11 @@ class BulkParser {
 
     // Sort the solution steps by their dependencies.
     $solutions = array_map(
-      fn (ParsedRequestsCollection $solution) => (new DependencySorter($solution, $this->pool, $this->installed))->sort(),
+      fn(ParsedRequestsCollection $solution) => (new DependencySorter(
+        $solution,
+        $this->pool,
+        $this->installed
+      ))->sort(),
       $solutions
     );
 
@@ -125,9 +129,7 @@ class BulkParser {
    * @param Request $request
    * @return ParsedRequestsCollection[] Possible solutions.
    */
-  protected function parseRequest(
-    Request $request
-  ): array {
+  protected function parseRequest(Request $request): array {
     $name = $request->getName();
     $versionConstraint = $request->getVersionConstraint();
     $type = $request->getType();
@@ -174,7 +176,11 @@ class BulkParser {
             $linkRequests->install($link['name'], $link['versionConstraint']);
           }
 
-          if ($link['type'] === 'conflict' || $link['type'] === 'provide' || $link['type'] === 'replace') {
+          if (
+            $link['type'] === 'conflict' ||
+            $link['type'] === 'provide' ||
+            $link['type'] === 'replace'
+          ) {
             $linkRequests->uninstall($link['name']);
           }
         }
@@ -215,7 +221,9 @@ class BulkParser {
     string $name,
     ?Constraint $versionConstraint = null
   ): array {
-    $versionConstraint = $versionConstraint ?? Constraint::parseOrNull($this->installed[$name]['version'] ?? '*');
+    $versionConstraint =
+      $versionConstraint ??
+      Constraint::parseOrNull($this->installed[$name]['version'] ?? '*');
     return $this->parseInstallRequest($name, $versionConstraint);
   }
 

@@ -65,9 +65,6 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    * }>
    */
   public function toArray(): array {
-    return array_map(
-      static fn (Request $request) => $request->toArray(),
-      $this->requests
-    );
+    return array_map(static fn(Request $request) => $request->toArray(), $this->requests);
   }
 }

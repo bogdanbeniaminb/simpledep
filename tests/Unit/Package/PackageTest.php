@@ -31,8 +31,8 @@ it('sets links - requires', function () {
     'bar' => [
       'type' => 'require',
       'name' => 'bar',
-      'versionConstraint' => $constraint
-    ]
+      'versionConstraint' => $constraint,
+    ],
   ]);
 
   $constraint2 = Constraint::parse('>=1.0.5');
@@ -41,13 +41,13 @@ it('sets links - requires', function () {
     'bar' => [
       'type' => 'require',
       'name' => 'bar',
-      'versionConstraint' => $constraint
+      'versionConstraint' => $constraint,
     ],
     'baz' => [
       'type' => 'require',
       'name' => 'baz',
-      'versionConstraint' => $constraint2
-    ]
+      'versionConstraint' => $constraint2,
+    ],
   ]);
 });
 
@@ -60,20 +60,21 @@ it('sets links - conflicts', function () {
     'bar' => [
       'type' => 'conflict',
       'name' => 'bar',
-      'versionConstraint' => $constraint
+      'versionConstraint' => $constraint,
     ],
     'baz' => [
       'type' => 'conflict',
       'name' => 'baz',
-      'versionConstraint' => $constraint
-    ]
+      'versionConstraint' => $constraint,
+    ],
   ]);
 });
 
 it('doesn\'t set links with invalid type', function () {
   $package = new Package('foo', '1.0.0');
-  expect(fn() => $package->addLink('invalid', 'bar', Constraint::parse('>=1.0.4')))
-    ->toThrow('Invalid');
+  expect(
+    fn() => $package->addLink('invalid', 'bar', Constraint::parse('>=1.0.4'))
+  )->toThrow('Invalid');
 });
 
 it('doesn\'t instantiate with empty name', function () {
@@ -88,6 +89,10 @@ it('handles links with string, missing or invalid versions', function () {
   $links = $package->getLinks();
   expect($links)->toHaveKeys(['bar', 'baz', 'qux']);
   expect($links['bar']['versionConstraint']->__toString())->toBe('>=1.0.4');
-  expect($links['baz']['versionConstraint']->__toString())->toBe(Constraint::default()->__toString());
-  expect($links['qux']['versionConstraint']->__toString())->toBe(Constraint::default()->__toString());
+  expect($links['baz']['versionConstraint']->__toString())->toBe(
+    Constraint::default()->__toString()
+  );
+  expect($links['qux']['versionConstraint']->__toString())->toBe(
+    Constraint::default()->__toString()
+  );
 });

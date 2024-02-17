@@ -22,7 +22,10 @@ class SolverException extends Exception {
   }
 
   public static function packageVersionNotFound(string $name, string $version): self {
-    return new self("Package version not found: $name ($version)", self::CODE_PACKAGE_VERSION_NOT_FOUND);
+    return new self(
+      "Package version not found: $name ($version)",
+      self::CODE_PACKAGE_VERSION_NOT_FOUND
+    );
   }
 
   public static function packageConflict(
@@ -31,7 +34,10 @@ class SolverException extends Exception {
     string $conflictName,
     string $conflictVersion
   ): self {
-    return new self("Package conflict: $name ($version) conflicts with $conflictName ($conflictVersion)", self::CODE_PACKAGE_CONFLICT);
+    return new self(
+      "Package conflict: $name ($version) conflicts with $conflictName ($conflictVersion)",
+      self::CODE_PACKAGE_CONFLICT
+    );
   }
 
   public static function packageRequired(
@@ -39,6 +45,9 @@ class SolverException extends Exception {
     string $requiredName,
     string $requiredVersion
   ): self {
-    return new self("Package $name is required by $requiredName ($requiredVersion)", self::CODE_PACKAGE_REQUIRED);
+    return new self(
+      "Package $name is required by $requiredName ($requiredVersion)",
+      self::CODE_PACKAGE_REQUIRED
+    );
   }
 }

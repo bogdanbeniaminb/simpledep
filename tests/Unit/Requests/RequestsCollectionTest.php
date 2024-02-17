@@ -6,29 +6,58 @@ use z4kn4fein\SemVer\Constraints\Constraint;
 
 it('instantiates a requests collection', function () {
   $requests = new RequestsCollection();
-  expect($requests)->toBeInstanceOf(RequestsCollection::class)
-    ->and($requests->getRequests())->toBe([]);
+  expect($requests)
+    ->toBeInstanceOf(RequestsCollection::class)
+    ->and($requests->getRequests())
+    ->toBe([]);
 });
 
 it('adds requests to the collection and retrieves them', function () {
   $requests = new RequestsCollection();
-  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', '>=2.0.0')
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz')
+    ->install('foo', '>=2.0.0')
     ->install('baz')
     ->addRequest(new Request(10, 'boo', '>=1.0.0'));
-  expect(count($requests))->toBe(6)
-    ->and($requests->toArray())->toMatchArray([
-      ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=1.0.0'],
+  expect(count($requests))
+    ->toBe(6)
+    ->and($requests->toArray())
+    ->toMatchArray([
+      [
+        'type' => Request::TYPE_INSTALL,
+        'name' => 'foo',
+        'versionConstraint' => '>=1.0.0',
+      ],
       ['type' => Request::TYPE_UPDATE, 'name' => 'bar', 'versionConstraint' => null],
       ['type' => Request::TYPE_UNINSTALL, 'name' => 'baz', 'versionConstraint' => null],
-      ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=2.0.0'],
-      ['type' => Request::TYPE_INSTALL, 'name' => 'baz', 'versionConstraint' => '>=0.0.0']
+      [
+        'type' => Request::TYPE_INSTALL,
+        'name' => 'foo',
+        'versionConstraint' => '>=2.0.0',
+      ],
+      [
+        'type' => Request::TYPE_INSTALL,
+        'name' => 'baz',
+        'versionConstraint' => '>=0.0.0',
+      ],
     ])
-    ->and($requests->first()->toArray())->toMatchArray(['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=1.0.0']);
+    ->and($requests->first()->toArray())
+    ->toMatchArray([
+      'type' => Request::TYPE_INSTALL,
+      'name' => 'foo',
+      'versionConstraint' => '>=1.0.0',
+    ]);
 });
 
 it('can slice the collection', function () {
   $requests = new RequestsCollection();
-  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', Constraint::parse('>=2.0.0'))
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz')
+    ->install('foo', Constraint::parse('>=2.0.0'))
     ->install('baz', Constraint::parse('>=1.0.0'));
   expect($requests->slice(1, 2)->toArray())->toMatchArray([
     ['type' => Request::TYPE_UPDATE, 'name' => 'bar', 'versionConstraint' => null],
@@ -40,20 +69,26 @@ it('can merge two collections', function () {
   $first = new RequestsCollection();
   $first->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz');
   $second = new RequestsCollection();
-  $second->install('foo', Constraint::parse('>=2.0.0'))->install('baz', Constraint::parse('>=1.0.0'));
+  $second
+    ->install('foo', Constraint::parse('>=2.0.0'))
+    ->install('baz', Constraint::parse('>=1.0.0'));
   $merged = $first->merge($second);
   expect($merged->toArray())->toMatchArray([
     ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=1.0.0'],
     ['type' => Request::TYPE_UPDATE, 'name' => 'bar', 'versionConstraint' => null],
     ['type' => Request::TYPE_UNINSTALL, 'name' => 'baz', 'versionConstraint' => null],
     ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=2.0.0'],
-    ['type' => Request::TYPE_INSTALL, 'name' => 'baz', 'versionConstraint' => '>=1.0.0']
+    ['type' => Request::TYPE_INSTALL, 'name' => 'baz', 'versionConstraint' => '>=1.0.0'],
   ]);
 });
 
 it('can act as a iterator', function () {
   $requests = new RequestsCollection();
-  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', '>=2.0.0')
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz')
+    ->install('foo', '>=2.0.0')
     ->install('baz')
     ->update('boo', '>=1.0.0');
   $result = [];
@@ -72,10 +107,18 @@ it('can act as a iterator', function () {
 
 it('can remove duplicates', function () {
   $requests = new RequestsCollection();
-  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', '>=2.0.0')
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz')
+    ->install('foo', '>=2.0.0')
     ->install('baz')
     ->update('boo', '>=1.0.0');
-  $requests->install('foo', Constraint::parse('>=1.0.0'))->update('bar')->uninstall('baz')->install('foo', '>=2.0.0')
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz')
+    ->install('foo', '>=2.0.0')
     ->install('baz')
     ->update('boo', '>=1.0.0');
   expect($requests->toArray())->toMatchArray([

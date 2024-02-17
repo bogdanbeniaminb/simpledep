@@ -70,10 +70,7 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    * }>
    */
   public function toArray(): array {
-    return array_map(
-      static fn (Request $request) => $request->toArray(),
-      $this->requests
-    );
+    return array_map(static fn(Request $request) => $request->toArray(), $this->requests);
   }
 
   /**
@@ -109,7 +106,7 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    */
   public function __clone() {
     $this->requests = array_map(
-      static fn (Request $request) => clone $request,
+      static fn(Request $request) => clone $request,
       $this->requests
     );
   }
@@ -134,7 +131,9 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    */
   public function merge($requests): static {
     if (!($requests instanceof static)) {
-      throw new \InvalidArgumentException('The requests must be an instance of ' . static::class);
+      throw new \InvalidArgumentException(
+        'The requests must be an instance of ' . static::class
+      );
     }
 
     return $this->append(...$requests->getRequests());
@@ -169,10 +168,13 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    * @return bool
    */
   public function contains(string $name, $type = null): bool {
-    return !empty(array_filter(
-      $this->requests,
-      static fn (Request $request) => $request->getName() === $name && ($type === null || $request->getType() === $type)
-    ));
+    return !empty(
+      array_filter(
+        $this->requests,
+        static fn(Request $request) => $request->getName() === $name &&
+          ($type === null || $request->getType() === $type)
+      )
+    );
   }
 
   /**

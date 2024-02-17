@@ -7,5 +7,4 @@ namespace SimpleDep\DependencySorter\Exceptions;
 use Exception;
 
 class DependencyException extends Exception {
-
 }

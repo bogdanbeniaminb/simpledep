@@ -16,7 +16,6 @@ class ParsedRequest extends Request {
    */
   protected ?int $packageId = null;
 
-
   /**
    * The version of the package to install.
    *

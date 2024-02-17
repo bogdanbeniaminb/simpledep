@@ -41,10 +41,7 @@ class RequestCompatibilityChecker {
    * }>
    * @return void
    */
-  public function __construct(
-    ParsedRequestsCollection $requests,
-    array $installed = []
-  ) {
+  public function __construct(ParsedRequestsCollection $requests, array $installed = []) {
     $this->requests = $requests;
     $this->installed = $installed;
   }
@@ -80,8 +77,14 @@ class RequestCompatibilityChecker {
    * @return bool
    */
   protected function checkGroup(array $requests): bool {
-    $types = array_map(static fn (ParsedRequest $request) => $request->getType(), $requests);
-    $packageIds = array_map(static fn (ParsedRequest $request) => $request->getPackageId(), $requests);
+    $types = array_map(
+      static fn(ParsedRequest $request) => $request->getType(),
+      $requests
+    );
+    $packageIds = array_map(
+      static fn(ParsedRequest $request) => $request->getPackageId(),
+      $requests
+    );
 
     // To be compatible: all the requests must be of the same type and same package ID.
     if (count(array_unique($types)) !== 1 || count(array_unique($packageIds)) > 1) {

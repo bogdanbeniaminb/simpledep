@@ -24,8 +24,11 @@
 |
 */
 
+use SimpleDep\Package\Package;
+use SimpleDep\Pool\Pool;
+
 expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
+  return $this->toBe(1);
 });
 
 /*
@@ -39,7 +42,22 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
-{
-    // ..
+function createPoolFromArray(array $poolData): Pool {
+  $pool = new Pool();
+
+  foreach ($poolData as $packageData) {
+    $package = new Package($packageData['name'], $packageData['version']);
+    if (!empty($packageData['links'])) {
+      foreach ($packageData['links'] as $linkData) {
+        $package->addLink(
+          $linkData['type'],
+          $linkData['name'],
+          $linkData['versionConstraint']
+        );
+      }
+    }
+    $pool->addPackage($package);
+  }
+
+  return $pool;
 }

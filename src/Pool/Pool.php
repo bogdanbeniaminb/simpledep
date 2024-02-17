@@ -97,7 +97,7 @@ class Pool {
     return array_values(
       array_filter(
         $packages,
-        static fn (Package $package) => $constraint->isSatisfiedBy($package->getVersion())
+        static fn(Package $package) => $constraint->isSatisfiedBy($package->getVersion())
       )
     );
   }
@@ -140,10 +140,7 @@ class Pool {
     }
 
     return max(
-      array_map(
-        static fn (Package $package) => $package->getId() ?: 0,
-        $packages
-      )
+      array_map(static fn(Package $package) => $package->getId() ?: 0, $packages)
     );
   }
 

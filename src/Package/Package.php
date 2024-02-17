@@ -19,7 +19,10 @@ class Package {
     'conflict' => ['description' => 'conflicts', 'type' => Link::TYPE_CONFLICT],
     'provide' => ['description' => 'provides', 'type' => Link::TYPE_PROVIDE],
     'replace' => ['description' => 'replaces', 'type' => Link::TYPE_REPLACE],
-    'require-dev' => ['description' => 'requires (for development)', 'type' => Link::TYPE_DEV_REQUIRE],
+    'require-dev' => [
+      'description' => 'requires (for development)',
+      'type' => Link::TYPE_DEV_REQUIRE,
+    ],
   ];
 
   /**
@@ -67,7 +70,8 @@ class Package {
     }
 
     $this->name = $name;
-    $this->version = $version instanceof Version ? $version : Version::parseOrNull($version);
+    $this->version =
+      $version instanceof Version ? $version : Version::parseOrNull($version);
   }
 
   /**
@@ -122,7 +126,6 @@ class Package {
     return $this;
   }
 
-
   /**
    * Returns the package links
    *
@@ -150,7 +153,8 @@ class Package {
     }
 
     if (is_string($versionConstraint)) {
-      $versionConstraint = Constraint::parseOrNull($versionConstraint) ?: Constraint::default();
+      $versionConstraint =
+        Constraint::parseOrNull($versionConstraint) ?: Constraint::default();
     } elseif ($versionConstraint === null) {
       $versionConstraint = Constraint::default();
     }
