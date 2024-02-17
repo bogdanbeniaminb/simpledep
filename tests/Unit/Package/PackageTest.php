@@ -78,6 +78,7 @@ it('doesn\'t set links with invalid type', function () {
 });
 
 it('doesn\'t instantiate with empty name', function () {
+  // @phpstan-ignore-next-line
   expect(fn() => new Package('', '1.0.0'))->toThrow('Package name cannot be empty');
 });
 
@@ -88,11 +89,11 @@ it('handles links with string, missing or invalid versions', function () {
   $package->addLink('require', 'qux', 'invalid');
   $links = $package->getLinks();
   expect($links)->toHaveKeys(['bar', 'baz', 'qux']);
-  expect($links['bar']['versionConstraint']->__toString())->toBe('>=1.0.4');
-  expect($links['baz']['versionConstraint']->__toString())->toBe(
-    Constraint::default()->__toString()
+  expect((string) ($links['bar']['versionConstraint'] ?? ''))->toBe('>=1.0.4');
+  expect((string) ($links['baz']['versionConstraint'] ?? ''))->toBe(
+    (string) Constraint::default()
   );
-  expect($links['qux']['versionConstraint']->__toString())->toBe(
-    Constraint::default()->__toString()
+  expect((string) ($links['qux']['versionConstraint'] ?? ''))->toBe(
+    (string) Constraint::default()
   );
 });

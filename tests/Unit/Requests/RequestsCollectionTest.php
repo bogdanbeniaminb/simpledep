@@ -20,6 +20,7 @@ it('adds requests to the collection and retrieves them', function () {
     ->uninstall('baz')
     ->install('foo', '>=2.0.0')
     ->install('baz')
+    // @phpstan-ignore-next-line
     ->addRequest(new Request(10, 'boo', '>=1.0.0'));
   expect(count($requests))
     ->toBe(6)
@@ -43,6 +44,7 @@ it('adds requests to the collection and retrieves them', function () {
         'versionConstraint' => '>=0.0.0',
       ],
     ])
+    // @phpstan-ignore-next-line
     ->and($requests->first()->toArray())
     ->toMatchArray([
       'type' => Request::TYPE_INSTALL,
@@ -82,6 +84,25 @@ it('can merge two collections', function () {
   ]);
 });
 
+it('doesn\'t merge with wrong objects', function () {
+  $requests = new RequestsCollection();
+  expect(fn() => $requests->merge(new RequestsCollection()))->not->toThrow(
+    InvalidArgumentException::class
+  );
+  expect(fn() => $requests->merge(new stdClass()))->toThrow(
+    InvalidArgumentException::class,
+    'must be an instance of'
+  );
+  expect(fn() => $requests->merge(new ArrayObject()))->toThrow(
+    InvalidArgumentException::class,
+    'must be an instance of'
+  );
+  expect(fn() => $requests->merge([]))->toThrow(
+    InvalidArgumentException::class,
+    'must be an instance of'
+  );
+});
+
 it('can act as a iterator', function () {
   $requests = new RequestsCollection();
   $requests
@@ -102,6 +123,22 @@ it('can act as a iterator', function () {
     ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=2.0.0'],
     ['type' => Request::TYPE_INSTALL, 'name' => 'baz', 'versionConstraint' => '>=0.0.0'],
     ['type' => Request::TYPE_UPDATE, 'name' => 'boo', 'versionConstraint' => '>=1.0.0'],
+  ]);
+});
+
+it('can filter requests', function () {
+  $requests = new RequestsCollection();
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz')
+    ->install('foo', '>=2.0.0')
+    ->install('baz')
+    ->update('boo', '>=1.0.0');
+  $filtered = $requests->filter(fn(Request $request) => $request->getName() === 'foo');
+  expect($filtered->toArray())->toMatchArray([
+    ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=1.0.0'],
+    ['type' => Request::TYPE_INSTALL, 'name' => 'foo', 'versionConstraint' => '>=2.0.0'],
   ]);
 });
 

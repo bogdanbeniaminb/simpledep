@@ -54,5 +54,35 @@ it('adds packages to the pool and retrieves them', function () {
     ->and($pool->hasPackage('bar'))
     ->toBeFalse()
     ->and(fn() => $pool->getPackageByConstraint('foo', 'invalid'))
-    ->toThrow(RuntimeException::class);
+    ->toThrow(RuntimeException::class)
+    ->and($pool->getPackageById(null))
+    ->toBeNull();
+});
+
+it('can generate missing package IDs', function () {
+  $pool = new Pool();
+  $foo = new Package('foo', '1.0.0');
+  $foo2 = new Package('foo', '1.0.1');
+  $foo2->setId(25);
+  $baz = new Package('baz', '1.0.0');
+
+  $pool->addPackage($foo)->addPackage($foo2)->addPackage($baz);
+  $pool->ensurePackageIds();
+  $minFakePackageId = $pool->getStartingFakePackageId();
+  expect($minFakePackageId)->toBeGreaterThan(25);
+
+  expect($foo->getId())
+    ->toBeGreaterThanOrEqual($minFakePackageId)
+    ->and($foo2->getId())
+    ->toBe(25)
+    ->and($baz->getId())
+    ->toBeGreaterThanOrEqual($minFakePackageId)
+    ->and($pool->getPackageById($foo->getId()))
+    ->toBe($foo)
+    ->and($pool->getPackageById($foo2->getId()))
+    ->toBe($foo2)
+    ->and($pool->getPackageById($baz->getId()))
+    ->toBe($baz)
+    ->and($pool->getPackageById(3))
+    ->toBeNull();
 });

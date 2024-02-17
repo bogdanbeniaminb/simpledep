@@ -28,7 +28,7 @@ use SimpleDep\Package\Package;
 use SimpleDep\Pool\Pool;
 
 expect()->extend('toBeOne', function () {
-  return $this->toBe(1);
+  // return $this->toBe(1);
 });
 
 /*
@@ -42,6 +42,18 @@ expect()->extend('toBeOne', function () {
 |
 */
 
+/**
+ * @param array<array{
+ *   name: non-empty-string,
+ *   version: non-empty-string,
+ *   links?: array<array{
+ *     type: non-empty-string,
+ *     name: non-empty-string,
+ *     versionConstraint: non-empty-string|null,
+ *    }>,
+ * }> $poolData
+ * @return Pool
+ */
 function createPoolFromArray(array $poolData): Pool {
   $pool = new Pool();
 

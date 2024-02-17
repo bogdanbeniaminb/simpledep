@@ -16,14 +16,19 @@ it('instantiates a bulk parser', function () {
 it('throws an error if trying to install a missing package', function () {
   $requests = (new RequestsCollection())->install('foo', '>=1.0.0');
   $parser = new BulkParser(new Pool(), $requests, [
-    'boo' => '1.0.0',
-    'bar' => '1.0.0',
+    'boo' => [
+      'version' => '1.0.0',
+    ],
+    'bar' => [
+      'version' => '1.0.0',
+    ],
   ]);
 
   expect(fn() => $parser->parse())->toThrow(ParserException::class);
 });
 
 it("doesn\'t accept invalid operations", function () {
+  // @phpstan-ignore-next-line
   $requests = (new RequestsCollection())->addRequest(new Request(10, 'boo', '>=1.0.0'));
   $parser = new BulkParser(new Pool(), $requests, []);
 
@@ -58,7 +63,9 @@ it('parses dependencies', function () {
     ->update('boo')
     ->uninstall('bee');
   $parser = new BulkParser($pool, $requests, [
-    'boo' => '1.0.0',
+    'boo' => [
+      'version' => '1.0.0',
+    ],
   ]);
 
   $solutions = $parser->parse();

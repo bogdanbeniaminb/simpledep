@@ -2,6 +2,7 @@
 
 use SimpleDep\Requests\Request;
 use z4kn4fein\SemVer\Constraints\Constraint;
+use z4kn4fein\SemVer\Version;
 
 it('handles install requests', function () {
   $request = new Request(Request::TYPE_INSTALL, 'foo');
@@ -25,6 +26,12 @@ it('handles install requests', function () {
     ->toBeInstanceOf(Constraint::class)
     ->and((string) $request->getVersionConstraint())
     ->toBe('>=1.0.0');
+
+  $request = new Request(Request::TYPE_INSTALL, 'foo', Version::parse('1.0.0'));
+  expect($request->getVersionConstraint())
+    ->toBeInstanceOf(Constraint::class)
+    ->and((string) $request->getVersionConstraint())
+    ->toBe('=1.0.0');
 });
 
 it('handles uninstall requests', function () {

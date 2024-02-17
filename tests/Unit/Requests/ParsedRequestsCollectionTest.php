@@ -20,7 +20,7 @@ it('adds requests to the collection and retrieves them', function () {
   $requests = new ParsedRequestsCollection();
   $requests
     ->install($package1)
-    ->addRequest(new Request(Request::TYPE_INSTALL, 'bar', '1.0.0', 1))
+    ->addRequest(new Request(Request::TYPE_INSTALL, 'bar', '1.0.0'))
     ->uninstall('baz');
   expect(count($requests))
     ->toBe(3)
@@ -31,18 +31,29 @@ it('adds requests to the collection and retrieves them', function () {
         'name' => 'foo',
         'versionConstraint' => '=1.0.0',
         'packageId' => 1,
+        'version' => '1.0.0',
       ],
       [
         'type' => ParsedRequest::TYPE_INSTALL,
         'name' => 'bar',
         'versionConstraint' => '=1.0.0',
         'packageId' => null,
+        'version' => null,
       ],
       [
         'type' => ParsedRequest::TYPE_UNINSTALL,
         'name' => 'baz',
         'versionConstraint' => null,
         'packageId' => null,
+        'version' => null,
       ],
     ]);
+});
+
+it('refuses to install packages without ID', function () {
+  $requests = new ParsedRequestsCollection();
+  $package = new Package('foo', '1.0.0');
+  expect(fn() => $requests->install($package))->toThrow(
+    new RuntimeException('The package must have an ID')
+  );
 });
