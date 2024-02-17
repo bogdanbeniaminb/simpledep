@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace SimpleDep\Requests;
 
-use Countable;
-use IteratorAggregate;
-use Traversable;
 use z4kn4fein\SemVer\Constraints\Constraint;
 
 /**

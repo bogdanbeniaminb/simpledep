@@ -13,10 +13,9 @@ use z4kn4fein\SemVer\Constraints\Constraint;
  * A collection of requests
  *
  * @template TRequest of Request
- * @implements IteratorAggregate<TRequest>
- * @implements Countable
+ * @implements RequestsCollectionInterface<TRequest>
  */
-class GenericRequestsCollection implements IteratorAggregate, Countable {
+class GenericRequestsCollection implements RequestsCollectionInterface {
   /**
    * The pool of packages
    *
@@ -66,7 +65,7 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    * @return array<non-empty-string, array{
    *   name: non-empty-string,
    *   type: Request::TYPE_*,
-   *   versionConstraint?: Constraint,
+   *   versionConstraint?: string|null,
    * }>
    */
   public function toArray(): array {
@@ -93,7 +92,7 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    */
   public function slice(int $offset, ?int $length = null): static {
     $new = new static();
-    $new->requests = array_slice($this->requests, $offset, $length);
+    $new->requests = array_values(array_slice($this->requests, $offset, $length));
     return $new;
   }
 
@@ -147,7 +146,7 @@ class GenericRequestsCollection implements IteratorAggregate, Countable {
    */
   public function filter(callable $callback): static {
     $new = new static();
-    $new->requests = array_filter($this->requests, $callback);
+    $new->requests = array_values(array_filter($this->requests, $callback));
     return $new;
   }
 

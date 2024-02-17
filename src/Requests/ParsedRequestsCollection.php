@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace SimpleDep\Requests;
 
+use RuntimeException;
 use SimpleDep\Package\Package;
 use Traversable;
 use z4kn4fein\SemVer\Constraints\Constraint;
 
+/**
+ * A collection of parsed requests
+ *
+ * @extends GenericRequestsCollection<ParsedRequest>
+ */
 class ParsedRequestsCollection extends GenericRequestsCollection {
-  /**
-   * The pool of packages
-   *
-   * @var Request[]
-   */
-  protected array $requests = [];
-
   /**
    * Install a package
    *
-   * @param non-empty-string $name
-   * @param Constraint|string|null $versionConstraint
+   * @param Package $package
    * @return $this
    */
   public function install(Package $package): static {
+    if (!$package->getId()) {
+      throw new RuntimeException('The package must have an ID');
+    }
+
     $this->requests[] = ParsedRequest::install($package);
     return $this;
   }
@@ -61,10 +63,13 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    *   name: non-empty-string,
    *   packageId?: int|null,
    *   type: Request::TYPE_*,
-   *   versionConstraint?: Constraint,
+   *   versionConstraint?: string|null,
    * }>
    */
   public function toArray(): array {
-    return array_map(static fn(Request $request) => $request->toArray(), $this->requests);
+    return array_map(
+      static fn(ParsedRequest $request) => $request->toArray(),
+      $this->requests
+    );
   }
 }

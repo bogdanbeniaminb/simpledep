@@ -66,7 +66,7 @@ class ParsedRequest extends Request {
   /**
    * Create a new request from a package version.
    *
-   * @param Request $request
+   * @param Package $package
    * @return static
    */
   public static function install(Package $package): static {
@@ -84,7 +84,8 @@ class ParsedRequest extends Request {
    *
    * @return array{
    *   type: Request::TYPE_*,
-   *   name: string,
+   *   name: non-empty-string,
+   *   packageId: int|null,
    *   versionConstraint: string|null,
    * }
    */

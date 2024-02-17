@@ -6,6 +6,7 @@ namespace SimpleDep\Solver;
 
 use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
+use z4kn4fein\SemVer\Version;
 
 /**
  * Checks the compatibility between the requests in a collection and also the installed packages. In other words, it checks if the requests can be satisfied.
@@ -22,7 +23,7 @@ class RequestCompatibilityChecker {
    * The pool of packages
    *
    * @var array<non-empty-string, array{
-   *   version: Version,
+   *   version: Version|string,
    * }>
    */
   protected array $installed = [];
@@ -36,10 +37,9 @@ class RequestCompatibilityChecker {
 
   /**
    * @param ParsedRequestsCollection $requests
-   * @var array<non-empty-string, array{
-   *   version: Version,
-   * }>
-   * @return void
+   * @param array<non-empty-string, array{
+   *   version: Version|string,
+   * }> $installed
    */
   public function __construct(ParsedRequestsCollection $requests, array $installed = []) {
     $this->requests = $requests;

@@ -18,6 +18,13 @@ class Pool {
   protected array $packages = [];
 
   /**
+   * The minimum fake package ID, for ensuring unique package IDs.
+   *
+   * @var int
+   */
+  protected int $minFakePackageId = 1000000;
+
+  /**
    * Add a package to the pool
    *
    * @param Package $package
@@ -41,15 +48,16 @@ class Pool {
   }
 
   /**
-   * Sort packages by version, descending.
+   * Sort packages by version, descending, in place.
    *
    * @param Package[] $packages
    * @return Package[]
    */
   protected function sortPackages(array $packages): array {
-    usort($packages, function (Package $a, Package $b) {
+    usort($packages, static function (Package $a, Package $b) {
       return Version::compare($b->getVersion(), $a->getVersion());
     });
+
     return $packages;
   }
 
@@ -77,9 +85,10 @@ class Pool {
    *
    * @param non-empty-string $name
    * @param Constraint|string|null $constraint
-   * @return Package[]|null
+   * @return Package[]
+   * @throws RuntimeException
    */
-  public function getPackageByConstraint(string $name, $constraint = null): ?array {
+  public function getPackageByConstraint(string $name, $constraint = null): array {
     $packages = $this->getPackageVersions($name);
 
     if (!$constraint) {
@@ -118,7 +127,7 @@ class Pool {
    * This is useful for ensuring that each package has a unique ID.
    */
   public function ensurePackageIds(): void {
-    $id = $this->getMaxPackageId() + 1;
+    $id = $this->detectStartingFakePackageId();
     foreach ($this->getPackages() as $package) {
       if ($package->getId()) {
         continue;
@@ -129,28 +138,47 @@ class Pool {
   }
 
   /**
-   * Get the maximum package ID
+   * Get the starting fake package ID.
    *
    * @return int
    */
-  protected function getMaxPackageId(): int {
+  protected function detectStartingFakePackageId(): int {
     $packages = $this->getPackages();
     if (empty($packages)) {
-      return 0;
+      return $this->minFakePackageId;
     }
 
-    return max(
-      array_map(static fn(Package $package) => $package->getId() ?: 0, $packages)
+    $maxPackageId = max(
+      ...array_values(
+        array_map(static fn(Package $package) => $package->getId() ?: 0, $packages)
+      )
     );
+
+    $this->minFakePackageId = max($maxPackageId + 1, $this->minFakePackageId);
+
+    return $this->minFakePackageId;
+  }
+
+  /**
+   * Get the minimum fake package ID.
+   *
+   * @return int
+   */
+  public function getStartingFakePackageId(): int {
+    return $this->minFakePackageId;
   }
 
   /**
    * Get a package by ID
    *
-   * @param int $id
+   * @param int|null $id
    * @return Package|null
    */
-  public function getPackageById(int $id): ?Package {
+  public function getPackageById(?int $id): ?Package {
+    if ($id === null) {
+      return null;
+    }
+
     foreach ($this->getPackages() as $package) {
       if ($package->getId() === $id) {
         return $package;

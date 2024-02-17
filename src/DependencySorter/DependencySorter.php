@@ -24,7 +24,7 @@ class DependencySorter {
    * The pool of packages
    *
    * @var array<non-empty-string, array{
-   *   version: Version,
+   *   version: Version|string,
    * }>
    */
   protected array $installed = [];
@@ -51,7 +51,7 @@ class DependencySorter {
    * @param ParsedRequestsCollection $requests The requests
    * @param Pool $pool The pool of packages
    * @param array<non-empty-string, array{
-   *   version: Version,
+   *   version: Version|string,
    * }> $installed The installed packages
    */
   public function __construct(
@@ -99,7 +99,7 @@ class DependencySorter {
     $i = 0;
     foreach ($this->requests as $request) {
       $this->requestsData[] = [
-        'id' => $i,
+        'id' => ++$i,
         'request' => $request,
         'dependencies' => [],
       ];
@@ -121,6 +121,7 @@ class DependencySorter {
    *   dependencies: int[],
    * } $requestData The request data
    * @return int[] The dependencies
+   * @throws DependencyException
    */
   protected function gatherDependencies(array $requestData): array {
     $request = $requestData['request'];
@@ -128,8 +129,13 @@ class DependencySorter {
       return [];
     }
 
+    $packageId = $request->getPackageId();
+    if (!$packageId) {
+      throw new DependencyException('Package ID not found in the request');
+    }
+
     $dependencies = [];
-    $package = $this->pool->getPackageById($request->getPackageId());
+    $package = $this->pool->getPackageById($packageId);
     if ($package === null) {
       throw new DependencyException('Package not found in the pool');
     }
@@ -137,36 +143,71 @@ class DependencySorter {
     // Go through the links.
     $links = $package->getLinks();
     foreach ($links as $link) {
-      if ($link['type'] === 'require') {
-        $id = $this->getRequestId(
-          $link['name'],
-          ParsedRequest::TYPE_INSTALL,
-          $link['versionConstraint']
-        );
-        if (!$id) {
-          // Check if the package is installed.
-          $installed = $this->installed[$link['name']] ?? null;
-          if (!$installed) {
-            throw new DependencyException('Missing dependency: ' . $link['name']);
-          }
-        }
+      $linkVersionConstraint = $link['versionConstraint'] ?? null;
 
-        $dependencies[] = $id;
+      if ($link['type'] === 'require') {
+        $id = $this->gatherRequireDependency($link['name'], $linkVersionConstraint);
+        if ($id) {
+          $dependencies[] = $id;
+        }
       } elseif (in_array($link['type'], ['conflict', 'replace'])) {
         $id = $this->getRequestId(
           $link['name'],
           ParsedRequest::TYPE_UNINSTALL,
-          $link['versionConstraint']
+          $linkVersionConstraint
         );
         if (!$id) {
           continue;
         }
 
         $dependencies[] = $id;
+      } else {
+        throw new DependencyException('Unsupported link type: ' . $link['type']);
       }
     }
 
     return $dependencies;
+  }
+
+  /**
+   * Gather the request ID for a require dependency.
+   *
+   * @param string $name The package name of the dependency
+   * @param Constraint|null $versionConstraint The version constraint of the dependency
+   * @return int|null
+   */
+  protected function gatherRequireDependency(
+    string $name,
+    ?Constraint $versionConstraint
+  ): ?int {
+    $id = $this->getRequestId($name, ParsedRequest::TYPE_INSTALL, $versionConstraint);
+    if ($id) {
+      return $id;
+    }
+
+    // Check if the package is installed.
+    $installed = $this->installed[$name] ?? null;
+    if (!$installed) {
+      throw new DependencyException('Missing dependency: ' . $name);
+    }
+
+    // Check if the installed version satisfies the version constraint.
+    if (
+      $versionConstraint &&
+      !$versionConstraint->isSatisfiedBy(Version::parse((string) $installed['version']))
+    ) {
+      throw new DependencyException(
+        sprintf(
+          'Installed version does not satisfy the version constraint: %s. Installed: %s, Required: %s',
+          $name,
+          (string) $installed['version'],
+          (string) $versionConstraint
+        )
+      );
+    }
+
+    // The installed version satisfies the version constraint. Nothing more to do.
+    return null;
   }
 
   /**
@@ -213,33 +254,7 @@ class DependencySorter {
    * @return void
    */
   protected function sortRequests(): void {
-    usort($this->requestsData, Closure::fromCallable([$this, 'sortRequestsCallback']));
-  }
-
-  /**
-   * Get the callback for sorting the requests.
-   *
-   * @param array{
-   *   id: int,
-   *   request: ParsedRequest,
-   *   dependencies: int[],
-   * } $a The first request data
-   * @param array{
-   *   id: int,
-   *   request: ParsedRequest,
-   *   dependencies: int[],
-   * } $b The second request data
-   * @return int
-   */
-  protected function sortRequestsCallback(array $a, array $b): int {
-    if (in_array($a['id'], $b['dependencies'])) {
-      return 1;
-    }
-
-    if (in_array($b['id'], $a['dependencies'])) {
-      return -1;
-    }
-
-    return 0;
+    $sorter = new SimpleDependencySorter($this->requestsData);
+    $this->requestsData = $sorter->sort();
   }
 }

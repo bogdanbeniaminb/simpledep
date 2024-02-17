@@ -7,7 +7,7 @@ namespace SimpleDep\Requests;
 use z4kn4fein\SemVer\Constraints\Constraint;
 use z4kn4fein\SemVer\Version;
 
-class Request {
+class Request implements RequestInterface {
   public const TYPE_INSTALL = 1;
   public const TYPE_UPDATE = 2;
   public const TYPE_UNINSTALL = 4;
@@ -23,8 +23,9 @@ class Request {
    * Create a new request
    *
    * @param int $type
-   * @param string $name
-   * @param string|Version|null $versionConstraint
+   * @phpstan-param Request::TYPE_* $type
+   * @param non-empty-string $name
+   * @param string|Version|Constraint|null $versionConstraint
    */
   public function __construct(
     protected int $type,
@@ -34,16 +35,29 @@ class Request {
     if (!empty($versionConstraint)) {
       if (is_string($versionConstraint)) {
         $versionConstraint = Constraint::parse($versionConstraint);
+      } elseif ($versionConstraint instanceof Version) {
+        $versionConstraint = Constraint::parse((string) $versionConstraint);
       }
 
       $this->versionConstraint = $versionConstraint;
     }
   }
 
+  /**
+   * Get the type of the request
+   *
+   * @return int
+   * @phpstan-return Request::TYPE_*
+   */
   public function getType(): int {
     return $this->type;
   }
 
+  /**
+   * Get the name of the package
+   *
+   * @return non-empty-string
+   */
   public function getName(): string {
     return $this->name;
   }
@@ -57,7 +71,7 @@ class Request {
    *
    * @return array{
    *   type: Request::TYPE_*,
-   *   name: string,
+   *   name: non-empty-string,
    *   versionConstraint: string|null,
    * }
    */
@@ -77,7 +91,7 @@ class Request {
    * @param Request $request
    * @return static
    */
-  public static function fromRequest(Request $request): static {
+  public static function fromRequest(RequestInterface $request): static {
     return new static(
       $request->getType(),
       $request->getName(),

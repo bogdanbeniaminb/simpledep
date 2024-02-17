@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SimpleDep\Solver\Exceptions;
 
 use Exception;
+use z4kn4fein\SemVer\Constraints\Constraint;
+use z4kn4fein\SemVer\Version;
 
 class ParserException extends Exception {
   public const CODE_NO_SOLUTION = 1;
@@ -24,7 +26,7 @@ class ParserException extends Exception {
 
   /**
    * @param string $name
-   * @param string|Version|null $version
+   * @param string|Version|Constraint|null $version
    */
   public static function packageVersionNotFound(string $name, $version): self {
     if ($version === null) {
@@ -65,5 +67,13 @@ class ParserException extends Exception {
 
   public static function invalidOperationType(int $type): self {
     return new self("Invalid operation type: $type", self::CODE_INVALID_OPERATION_TYPE);
+  }
+
+  /**
+   * @param string $name
+   * @return ParserException
+   */
+  public static function packageNotInstalled(string $name): self {
+    return new self("Package not installed: $name", self::CODE_PACKAGE_NOT_FOUND);
   }
 }

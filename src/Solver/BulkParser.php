@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SimpleDep\Solver;
 
 use RuntimeException;
+use SimpleDep\DependencySorter\DependencySorter;
 use SimpleDep\Pool\Pool;
+use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
 use SimpleDep\Requests\Request;
 use SimpleDep\Requests\RequestsCollection;
@@ -25,7 +27,7 @@ class BulkParser {
    * The pool of packages
    *
    * @var array<non-empty-string, array{
-   *   version: Version,
+   *   version: Version|string,
    * }>
    */
   protected array $installed = [];
@@ -44,6 +46,13 @@ class BulkParser {
    */
   protected bool $throwExceptions = true;
 
+  /**
+   * @param Pool $pool The pool of packages
+   * @param RequestsCollection $requests The requests
+   * @param array<non-empty-string, array{
+   *   version: Version|string,
+   * }> $installed The installed packages
+   */
   public function __construct(
     Pool $pool,
     RequestsCollection $requests,
@@ -107,7 +116,10 @@ class BulkParser {
       return [];
     }
 
-    $currentSolutions = $this->parseRequest($requests->first());
+    /** @var ParsedRequest $firstRequest */
+    $firstRequest = $requests->first();
+
+    $currentSolutions = $this->parseRequest($firstRequest);
     $next = $this->parseRequests($requests->slice(1));
     if (!count($next)) {
       return $currentSolutions;
@@ -143,6 +155,7 @@ class BulkParser {
         return $this->parseUninstallRequest($name);
     }
 
+    // @phpstan-ignore-next-line
     throw ParserException::invalidOperationType($type);
   }
 
@@ -152,7 +165,7 @@ class BulkParser {
    * @param non-empty-string $name
    * @param Constraint|null $versionConstraint
    * @return ParsedRequestsCollection[]
-   * @throws ParserException
+   * @throws ParserException|RuntimeException
    */
   protected function parseInstallRequest(
     string $name,
@@ -160,6 +173,7 @@ class BulkParser {
   ): array {
     $packages = $this->pool->getPackageByConstraint($name, $versionConstraint);
     if (!count($packages) && $this->throwExceptions) {
+      var_dump($name, $versionConstraint);
       throw ParserException::packageVersionNotFound($name, $versionConstraint);
     }
 
@@ -173,7 +187,7 @@ class BulkParser {
         $linkRequests = new RequestsCollection();
         foreach ($links as $link) {
           if ($link['type'] === 'require') {
-            $linkRequests->install($link['name'], $link['versionConstraint']);
+            $linkRequests->install($link['name'], $link['versionConstraint'] ?? '*');
           }
 
           if (
@@ -221,9 +235,22 @@ class BulkParser {
     string $name,
     ?Constraint $versionConstraint = null
   ): array {
-    $versionConstraint =
-      $versionConstraint ??
-      Constraint::parseOrNull($this->installed[$name]['version'] ?? '*');
+    if (!$versionConstraint) {
+      $installedVersion = $this->installed[$name]['version'] ?? null;
+
+      // If not installed, we can't update it.
+      if (!$installedVersion) {
+        if ($this->throwExceptions) {
+          throw ParserException::packageNotInstalled($name);
+        }
+        return [];
+      }
+
+      // If installed, we can update it to the latest version compatible with the installed version.
+      $versionConstraint =
+        Constraint::parseOrNull('^' . $installedVersion) ?? Constraint::default();
+    }
+
     return $this->parseInstallRequest($name, $versionConstraint);
   }
 

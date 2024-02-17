@@ -10,7 +10,7 @@ class Package {
   /**
    * @phpstan-var array<non-empty-string, array{
    *   description: string,
-   *   method: Link::TYPE_*
+   *   type: Link::TYPE_*
    * }>
    * @internal
    */
@@ -36,23 +36,23 @@ class Package {
   /**
    * The package name
    *
-   * @var string
+   * @var non-empty-string
    */
   protected string $name;
 
   /**
    * The package version
    *
-   * @var Version|null
+   * @var Version
    */
-  protected ?Version $version = null;
+  protected Version $version;
 
   /**
    * The package links
    *
    * @var array<non-empty-string, array{
-   *   type: string,
-   *   name: string,
+   *   type: non-empty-string,
+   *   name: non-empty-string,
    *   versionConstraint?: Constraint|null,
    * }>
    */
@@ -70,8 +70,9 @@ class Package {
     }
 
     $this->name = $name;
-    $this->version =
-      $version instanceof Version ? $version : Version::parseOrNull($version);
+    $version =
+      $version instanceof Version ? $version : Version::parseOrNull($version ?: '');
+    $this->version = $version ?: Version::parse('0.0.0');
   }
 
   /**
@@ -97,7 +98,7 @@ class Package {
   /**
    * Returns the package name
    *
-   * @return string
+   * @return non-empty-string
    */
   public function getName(): string {
     return $this->name;
@@ -130,8 +131,8 @@ class Package {
    * Returns the package links
    *
    * @return array<non-empty-string, array{
-   *   type: string,
-   *   name: string,
+   *   type: non-empty-string,
+   *   name: non-empty-string,
    *   versionConstraint?: Constraint|null,
    * }>
    */
@@ -142,9 +143,9 @@ class Package {
   /**
    * Add a link to another package
    *
-   * @param string $name
-   * @param string $type
-   * @param string|Constraint|null $version
+   * @param non-empty-string $name
+   * @param non-empty-string $type
+   * @param string|Constraint|null $versionConstraint
    * @return $this
    */
   public function addLink(string $type, string $name, $versionConstraint = null): static {
@@ -170,7 +171,7 @@ class Package {
   /**
    * Add a require link to another package.
    *
-   * @param string $name
+   * @param non-empty-string $name
    * @param string|Constraint|null $versionConstraint
    * @return $this
    */
@@ -181,7 +182,7 @@ class Package {
   /**
    * Add a conflict link to another package.
    *
-   * @param string $name
+   * @param non-empty-string $name
    * @param string|Constraint|null $versionConstraint
    * @return $this
    */
