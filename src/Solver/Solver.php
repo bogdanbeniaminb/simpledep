@@ -122,6 +122,7 @@ class Solver {
   protected function generateOperation(ParsedRequest $request): array {
     $operation = [
       'name' => $request->getName(),
+      'type' => self::OPERATION_TYPE_INSTALL,
     ];
 
     $version = null;

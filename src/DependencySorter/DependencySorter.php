@@ -172,7 +172,7 @@ class DependencySorter {
   /**
    * Gather the request ID for a require dependency.
    *
-   * @param string $name The package name of the dependency
+   * @param non-empty-string $name The package name of the dependency
    * @param Constraint|null $versionConstraint The version constraint of the dependency
    * @return int|null
    */

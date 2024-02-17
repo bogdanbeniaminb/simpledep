@@ -62,6 +62,7 @@ class SimpleDependencySorter {
 
     while (!empty($this->remaining)) {
       $item = reset($this->remaining);
+      // @phpstan-ignore-next-line
       $this->addItemWithDependencies($item);
     }
 
@@ -112,10 +113,13 @@ class SimpleDependencySorter {
    * @param T $item The item to add
    */
   protected function addItem(array $item): void {
+    // @phpstan-ignore-next-line
     $this->sorted[] = $item;
-    $this->remaining = array_filter(
-      $this->remaining,
-      static fn(array $remainingItem) => $remainingItem['id'] !== $item['id']
+    $this->remaining = array_values(
+      array_filter(
+        $this->remaining,
+        static fn(array $remainingItem) => $remainingItem['id'] !== $item['id']
+      )
     );
   }
 

@@ -89,14 +89,17 @@ it('doesn\'t merge with wrong objects', function () {
   expect(fn() => $requests->merge(new RequestsCollection()))->not->toThrow(
     InvalidArgumentException::class
   );
+  // @phpstan-ignore-next-line
   expect(fn() => $requests->merge(new stdClass()))->toThrow(
     InvalidArgumentException::class,
     'must be an instance of'
   );
+  // @phpstan-ignore-next-line
   expect(fn() => $requests->merge(new ArrayObject()))->toThrow(
     InvalidArgumentException::class,
     'must be an instance of'
   );
+  // @phpstan-ignore-next-line
   expect(fn() => $requests->merge([]))->toThrow(
     InvalidArgumentException::class,
     'must be an instance of'
