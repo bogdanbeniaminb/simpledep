@@ -173,7 +173,6 @@ class BulkParser {
   ): array {
     $packages = $this->pool->getPackageByConstraint($name, $versionConstraint);
     if (!count($packages) && $this->throwExceptions) {
-      var_dump($name, $versionConstraint);
       throw ParserException::packageVersionNotFound($name, $versionConstraint);
     }
 

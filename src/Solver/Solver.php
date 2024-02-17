@@ -8,13 +8,13 @@ use SimpleDep\Pool\Pool;
 use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
 use SimpleDep\Requests\RequestsCollection;
+use SimpleDep\Solver\Exceptions\ParserException;
 use SimpleDep\Solver\Exceptions\SolverException;
 use z4kn4fein\SemVer\Version;
 
 class Solver {
   public const OPERATION_TYPE_INSTALL = 1;
-  public const OPERATION_TYPE_UPDATE = 2;
-  public const OPERATION_TYPE_UNINSTALL = 4;
+  public const OPERATION_TYPE_UNINSTALL = 2;
 
   /**
    * The pool of packages
@@ -74,8 +74,12 @@ class Solver {
    * @throws SolverException
    */
   public function solve(): array {
-    $bulkParser = new BulkParser($this->pool, $this->requests, $this->installed);
-    $this->requestSolutions = $bulkParser->parse();
+    try {
+      $bulkParser = new BulkParser($this->pool, $this->requests, $this->installed);
+      $this->requestSolutions = $bulkParser->parse();
+    } catch (ParserException $e) {
+      throw new SolverException($e->getMessage(), 0, $e);
+    }
 
     // Check if there are solutions.
     if (empty($this->requestSolutions)) {
@@ -121,11 +125,13 @@ class Solver {
     ];
 
     $version = null;
-    if ($request->getType() === ParsedRequest::TYPE_INSTALL) {
+    if (
+      in_array($request->getType(), [
+        ParsedRequest::TYPE_INSTALL,
+        ParsedRequest::TYPE_UPDATE,
+      ])
+    ) {
       $operation['type'] = self::OPERATION_TYPE_INSTALL;
-      $version = $request->getVersion();
-    } elseif ($request->getType() === ParsedRequest::TYPE_UPDATE) {
-      $operation['type'] = self::OPERATION_TYPE_UPDATE;
       $version = $request->getVersion();
     } elseif ($request->getType() === ParsedRequest::TYPE_UNINSTALL) {
       $operation['type'] = self::OPERATION_TYPE_UNINSTALL;
