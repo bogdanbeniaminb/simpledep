@@ -98,4 +98,13 @@ class Request implements RequestInterface {
       $request->getVersionConstraint()
     );
   }
+
+  /**
+   * Handle cloning of the request.
+   */
+  public function __clone() {
+    $this->versionConstraint = $this->versionConstraint
+      ? clone $this->versionConstraint
+      : null;
+  }
 }

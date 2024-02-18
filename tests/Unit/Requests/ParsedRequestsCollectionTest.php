@@ -32,6 +32,7 @@ it('adds requests to the collection and retrieves them', function () {
         'versionConstraint' => '=1.0.0',
         'packageId' => 1,
         'version' => '1.0.0',
+        'requiredBy' => [],
       ],
       [
         'type' => ParsedRequest::TYPE_INSTALL,
@@ -39,6 +40,7 @@ it('adds requests to the collection and retrieves them', function () {
         'versionConstraint' => '=1.0.0',
         'packageId' => null,
         'version' => null,
+        'requiredBy' => [],
       ],
       [
         'type' => ParsedRequest::TYPE_UNINSTALL,
@@ -46,6 +48,7 @@ it('adds requests to the collection and retrieves them', function () {
         'versionConstraint' => null,
         'packageId' => null,
         'version' => null,
+        'requiredBy' => [],
       ],
     ]);
 });

@@ -4,6 +4,7 @@ use SimpleDep\Package\Package;
 use SimpleDep\Pool\Pool;
 use SimpleDep\Requests\RequestsCollection;
 use SimpleDep\Solver\Exceptions\SolverException;
+use SimpleDep\Solver\Operations\Operation;
 use SimpleDep\Solver\Solver;
 
 it('can solve requests', function () {
@@ -45,7 +46,19 @@ it('can solve requests', function () {
     ->and($solution = $solver->solve())
     ->toBeArray()
     ->and(count($solution))
-    ->toBeGreaterThanOrEqual(count($requests));
+    ->toBeGreaterThanOrEqual(count($requests))
+    ->and($solution['foo'])
+    ->toBeInstanceOf(Operation::class)
+    ->and($solution['foo']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['boo'])
+    ->toBeInstanceOf(Operation::class)
+    ->and($solution['boo']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['bee'])
+    ->toBeInstanceOf(Operation::class)
+    ->and($solution['bee']->getType())
+    ->toBe(Operation::TYPE_UNINSTALL);
 });
 
 it('throws an error if no solution exists', function () {
@@ -97,14 +110,35 @@ it('throws an error if there are conflicting dependencies', function () {
   expect(fn() => $solver->solve())->not->toThrow(SolverException::class);
 });
 
+it('handles dependency packages', function () {
+  $foo = (new Package('foo', '1.0.0'))->addDependency('bar', '>=1.0.0');
+  $bar = new Package('bar', '1.0.0');
+  $pool = (new Pool())->addPackage($foo)->addPackage($bar);
+  $requests = (new RequestsCollection())->install('foo', '>=1.0.0');
+
+  $solver = new Solver($pool, $requests);
+
+  $solution = $solver->solve();
+  expect($solution)
+    ->toBeArray()
+    ->and(count($solution))
+    ->toBe(2)
+    ->and($solution['foo']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['bar']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['bar']->getRequiredBy())
+    ->toBe([$solution['foo']]);
+});
+
 it('handles uninstalling replaced packages', function () {
-  $foo = (new Package('foo', '1.0.0'))->addLink('replace', 'bar', '>=1.0.0');
+  $foo = (new Package('foo', '1.0.0'))->addConflict('bar', '>=1.0.0');
   $bar = new Package('bar', '1.0.0');
   $pool = (new Pool())->addPackage($foo)->addPackage($bar);
   $requests = (new RequestsCollection())->install('foo', '>=1.0.0');
 
   $solver = new Solver($pool, $requests, [
-    'bar' => [
+    'foo' => [
       'version' => '1.0.0',
     ],
   ]);
@@ -114,8 +148,10 @@ it('handles uninstalling replaced packages', function () {
     ->toBeArray()
     ->and(count($solution))
     ->toBe(2)
-    ->and($solution['foo']['type'])
-    ->toBe(Solver::OPERATION_TYPE_INSTALL)
-    ->and($solution['bar']['type'])
-    ->toBe(Solver::OPERATION_TYPE_UNINSTALL);
+    ->and($solution['foo']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['bar']->getType())
+    ->toBe(Operation::TYPE_UNINSTALL)
+    ->and($solution['bar']->getRequiredBy())
+    ->toBe([$solution['foo']]);
 });

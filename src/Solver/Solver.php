@@ -10,12 +10,11 @@ use SimpleDep\Requests\ParsedRequestsCollection;
 use SimpleDep\Requests\RequestsCollection;
 use SimpleDep\Solver\Exceptions\ParserException;
 use SimpleDep\Solver\Exceptions\SolverException;
+use SimpleDep\Solver\Operations\Operation;
+use WeakMap;
 use z4kn4fein\SemVer\Version;
 
 class Solver {
-  public const OPERATION_TYPE_INSTALL = 1;
-  public const OPERATION_TYPE_UNINSTALL = 2;
-
   /**
    * The pool of packages
    *
@@ -66,20 +65,11 @@ class Solver {
   /**
    * Solve the dependencies
    *
-   * @return array<non-empty-string, array{
-   *   type: Solver::OPERATION_TYPE_*,
-   *   name: non-empty-string,
-   *   version?: string|null,
-   * }>
+   * @return array<non-empty-string, Operation>
    * @throws SolverException
    */
   public function solve(): array {
-    try {
-      $bulkParser = new BulkParser($this->pool, $this->requests, $this->installed);
-      $this->requestSolutions = $bulkParser->parse();
-    } catch (ParserException $e) {
-      throw new SolverException($e->getMessage(), 0, $e);
-    }
+    $this->parseSolutions();
 
     // Check if there are solutions.
     if (empty($this->requestSolutions)) {
@@ -92,56 +82,83 @@ class Solver {
   }
 
   /**
+   * Parse the solutions.
+   *
+   * @return ParsedRequestsCollection[]
+   * @throws SolverException
+   */
+  public function parseSolutions(): array {
+    try {
+      $bulkParser = new BulkParser($this->pool, $this->requests, $this->installed);
+      $this->requestSolutions = $bulkParser->parse();
+    } catch (ParserException $e) {
+      throw new SolverException($e->getMessage(), 0, $e);
+    }
+
+    return $this->requestSolutions;
+  }
+
+  /**
    * Generate the operations from the solution.
    *
    * @param ParsedRequestsCollection $solution
-   * @return array<non-empty-string, array{
-   *   type: Solver::OPERATION_TYPE_*,
-   *   name: non-empty-string,
-   *   version?: string|null,
-   * }>
+   * @return array<non-empty-string, Operation>
    */
-  protected function generateOperations(ParsedRequestsCollection $solution): array {
+  public function generateOperations(ParsedRequestsCollection $solution): array {
+    // Gather the dependencies for the solution.
+    $solution = $solution->gatherDependencies($this->pool, $this->installed);
+
+    // Generate the operations.
     $operations = [];
+    $operationsMap = new WeakMap();
     foreach ($solution as $step) {
-      $operations[$step->getName()] = $this->generateOperation($step);
+      $operation = $this->generateOperation($step);
+      $operationsMap[$step] = $operation;
+      $operations[$step->getName()] = [
+        'request' => $step,
+        'operation' => $operation,
+      ];
     }
-    return $operations;
+
+    // Transform ParsedRequest dependencies to Operation dependencies.
+    foreach ($operations as $operation) {
+      /** @var ParsedRequest $request */
+      $request = $operation['request'];
+      $requiredBy = $request->getRequiredBy();
+      $requiredByOperations = array_values(
+        array_filter(
+          array_map(
+            static fn(ParsedRequest $request) => $operationsMap[$request] ?? null,
+            $requiredBy
+          )
+        )
+      );
+      $operation['operation']->setRequiredBy($requiredByOperations);
+    }
+
+    // Return the operations.
+    return array_map(static fn(array $operation) => $operation['operation'], $operations);
   }
 
   /**
    * Generate the operation from the request.
    *
    * @param ParsedRequest $request
-   * @return array{
-   *   type: Solver::OPERATION_TYPE_*,
-   *   name: non-empty-string,
-   *   version?: string|null,
-   * }
+   * @return Operation
    */
-  protected function generateOperation(ParsedRequest $request): array {
-    $operation = [
-      'name' => $request->getName(),
-      'type' => self::OPERATION_TYPE_INSTALL,
-    ];
-
-    $version = null;
+  protected function generateOperation(ParsedRequest $request): Operation {
     if (
       in_array($request->getType(), [
         ParsedRequest::TYPE_INSTALL,
         ParsedRequest::TYPE_UPDATE,
       ])
     ) {
-      $operation['type'] = self::OPERATION_TYPE_INSTALL;
-      $version = $request->getVersion();
+      return Operation::install(
+        $request->getName(),
+        ((string) $request->getVersion()) ?: null
+      );
     } elseif ($request->getType() === ParsedRequest::TYPE_UNINSTALL) {
-      $operation['type'] = self::OPERATION_TYPE_UNINSTALL;
+      return Operation::uninstall($request->getName());
     }
-
-    if (!empty($version)) {
-      $operation['version'] = (string) $version;
-    }
-
-    return $operation;
   }
 }

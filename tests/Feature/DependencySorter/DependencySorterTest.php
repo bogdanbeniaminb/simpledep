@@ -1,6 +1,7 @@
 <?php
 
 use SimpleDep\DependencySorter\DependencySorter;
+use SimpleDep\DependencySorter\Exceptions\DependencyException;
 use SimpleDep\Package\Package;
 use SimpleDep\Pool\Pool;
 use SimpleDep\Requests\ParsedRequest;
@@ -110,3 +111,105 @@ it('sorts requests correctly', function () {
   $sortedRequestNames = collect($sortedRequests)->pluck('name')->toArray();
   expect($sortedRequestNames)->toBe(['baz', 'foo', 'bar']);
 });
+
+it('throws an error when the requests collection is missing dependencies', function () {
+  $foo1 = new Package('foo', '1.0.0');
+  $foo2 = new Package('foo', '1.0.1');
+  $foo2->addDependency('baz', '1.0.0')->addDependency('boo', '1.0.0');
+  $baz = new Package('baz', '1.0.0');
+  $pool = new Pool();
+  $pool->addPackage($foo1)->addPackage($foo2)->addPackage($baz)->ensurePackageIds();
+
+  $requests = new ParsedRequestsCollection();
+  $requests->install($foo2);
+
+  $sorter = new DependencySorter($requests, $pool);
+  expect(fn() => $sorter->sort())->toThrow(
+    DependencyException::class,
+    'Missing dependency'
+  );
+});
+
+it(
+  'marks dependencies correctly when multiple packages require the same package',
+  function () {
+    $foo1 = new Package('foo', '1.0.0');
+    $foo2 = new Package('foo', '1.0.1');
+    $foo2->setId(1)->addDependency('baz', '1.0.0')->addDependency('boo', '1.0.0');
+    $baz = new Package('baz', '1.0.0');
+    $baz->setId(2);
+    $bar = new Package('bar', '1.0.0');
+    $bar->setId(3)->addDependency('baz', '1.0.0');
+    $boo = new Package('boo', '1.0.0');
+    $boo->setId(4)->addDependency('baz', '1.0.0');
+    $pool = new Pool();
+    $pool
+      ->addPackage($foo1)
+      ->addPackage($foo2)
+      ->addPackage($baz)
+      ->addPackage($bar)
+      ->addPackage($boo)
+      ->ensurePackageIds();
+
+    $requests = new ParsedRequestsCollection();
+    $requests->install($foo2)->install($bar)->install($baz)->install($boo);
+
+    $sorter = new class ($requests, $pool) extends DependencySorter {
+      public function gatherRequestsData(): void {
+        parent::gatherRequestsData();
+      }
+
+      /**
+       * @return array<array{
+       *   id: int,
+       *   request: ParsedRequest,
+       *   dependencies: int[],
+       * }>
+       */
+      public function getRequestsData(): array {
+        return $this->requestsData;
+      }
+    };
+
+    $sorter->gatherRequestsData();
+    $requestsData = $sorter->getRequestsData();
+
+    expect($requestsData)->toBeArray()->toHaveCount(count($requests));
+    $fooRequest = collect($requestsData)
+      ->filter(static fn($request) => $request['request']->getName() === 'foo')
+      ->values()
+      ->first();
+    expect($fooRequest)->toBeArray();
+    /** @var array{id: int, request: ParsedRequest, dependencies: int[]} $fooRequest */
+
+    $bazRequest = collect($requestsData)
+      ->filter(static fn($request) => $request['request']->getName() === 'baz')
+      ->values()
+      ->first();
+    expect($bazRequest)->toBeArray();
+    /** @var array{id: int, request: ParsedRequest, dependencies: int[]} $bazRequest */
+
+    $barRequest = collect($requestsData)
+      ->filter(static fn($request) => $request['request']->getName() === 'bar')
+      ->values()
+      ->first();
+    expect($barRequest)->toBeArray();
+    /** @var array{id: int, request: ParsedRequest, dependencies: int[]} $barRequest */
+
+    $booRequest = collect($requestsData)
+      ->filter(static fn($request) => $request['request']->getName() === 'boo')
+      ->values()
+      ->first();
+    expect($booRequest)->toBeArray();
+    /** @var array{id: int, request: ParsedRequest, dependencies: int[]} $booRequest */
+
+    expect($fooRequest['dependencies'])
+      ->toBeArray()
+      ->and($fooRequest['dependencies'])
+      ->toBe([$bazRequest['id'], $booRequest['id']], 'Foo should depend on Baz and Boo');
+    expect($booRequest['dependencies'])
+      ->toBeArray()
+      ->and($booRequest['dependencies'])
+      ->toBe([$bazRequest['id']], 'Boo should depend on Baz');
+  }
+);

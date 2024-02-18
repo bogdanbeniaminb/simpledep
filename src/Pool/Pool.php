@@ -125,8 +125,10 @@ class Pool {
   /**
    * Ensure package IDs.
    * This is useful for ensuring that each package has a unique ID.
+   *
+   * @return $this
    */
-  public function ensurePackageIds(): void {
+  public function ensurePackageIds(): static {
     $id = $this->detectStartingFakePackageId();
     foreach ($this->getPackages() as $package) {
       if ($package->getId()) {
@@ -135,6 +137,8 @@ class Pool {
 
       $package->setId($id++);
     }
+
+    return $this;
   }
 
   /**
@@ -149,7 +153,7 @@ class Pool {
     }
 
     $maxPackageId = max(
-      ...array_values(
+      array_values(
         array_map(static fn(Package $package) => $package->getId() ?: 0, $packages)
       )
     );

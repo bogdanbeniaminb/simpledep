@@ -17,6 +17,13 @@ class ParsedRequest extends Request {
   protected ?int $packageId = null;
 
   /**
+   * The requests that require this.
+   *
+   * @var ParsedRequest[]
+   */
+  protected array $requiredBy = [];
+
+  /**
    * The version of the package to install.
    *
    * @var Version|null
@@ -64,6 +71,36 @@ class ParsedRequest extends Request {
   }
 
   /**
+   * Get the requests that require this.
+   *
+   * @return ParsedRequest[]
+   */
+  public function setRequiredBy(array $requiredBy): static {
+    $this->requiredBy = $requiredBy;
+    return $this;
+  }
+
+  /**
+   * Add the requests that require this.
+   *
+   * @param ParsedRequest $requiredBy
+   * @return $this
+   */
+  public function addRequiredBy(ParsedRequest $requiredBy): static {
+    $this->requiredBy[] = $requiredBy;
+    return $this;
+  }
+
+  /**
+   * Set the requests that require this.
+   *
+   * @return ParsedRequest[] $requiredBy
+   */
+  public function getRequiredBy(): array {
+    return $this->requiredBy;
+  }
+
+  /**
    * Create a new request from a package version.
    *
    * @param Package $package
@@ -79,6 +116,13 @@ class ParsedRequest extends Request {
       ->setVersion($package->getVersion());
   }
 
+  public function __clone() {
+    $this->version = $this->version ? clone $this->version : null;
+    $this->versionConstraint = $this->versionConstraint
+      ? clone $this->versionConstraint
+      : null;
+  }
+
   /**
    * Convert the request to an array
    *
@@ -87,12 +131,21 @@ class ParsedRequest extends Request {
    *   name: non-empty-string,
    *   packageId: int|null,
    *   versionConstraint: string|null,
+   *   requiredBy: array<non-empty-string, array{
+   *     type: Request::TYPE_*,
+   *     name: non-empty-string,
+   *     versionConstraint: string|null,
+   *   }>,
    * }
    */
   public function toArray(): array {
     return array_merge(parent::toArray(), [
       'packageId' => $this->packageId,
       'version' => $this->version ? (string) $this->version : null,
+      'requiredBy' => array_map(
+        static fn(ParsedRequest $request) => $request->toArray(),
+        $this->requiredBy
+      ),
     ]);
   }
 }

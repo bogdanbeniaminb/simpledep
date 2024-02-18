@@ -142,12 +142,30 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * Filter the requests
    *
    * @param callable $callback
+   * @phpstan-param callable(TRequest): bool $callback
    * @return static
    */
   public function filter(callable $callback): static {
     $new = new static();
     $new->requests = array_values(array_filter($this->requests, $callback));
     return $new;
+  }
+
+  /**
+   * Find a request
+   *
+   * @param callable $callback
+   * @phpstan-param callable(TRequest): bool $callback
+   * @return TRequest|null
+   */
+  public function find(callable $callback): ?Request {
+    foreach ($this->requests as $request) {
+      if ($callback($request)) {
+        return $request;
+      }
+    }
+
+    return null;
   }
 
   /**

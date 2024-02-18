@@ -6,6 +6,8 @@ namespace SimpleDep\Requests;
 
 use RuntimeException;
 use SimpleDep\Package\Package;
+use SimpleDep\Pool\Pool;
+use SimpleDep\Solver\DependencyGatherer;
 use Traversable;
 use z4kn4fein\SemVer\Constraints\Constraint;
 
@@ -56,6 +58,29 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
     return $this;
   }
 
+  public function __clone() {
+    $this->requests = array_map(
+      static fn(ParsedRequest $request) => clone $request,
+      $this->requests
+    );
+  }
+
+  /**
+   * Gather the dependencies of all requests. Returns a new collection with the dependencies filled in.
+   *
+   * @param Pool $pool The pool of packages
+   * @param array<non-empty-string, array{
+   *  version: Version|string,
+   * }> $installed The installed packages
+   * @return static A new collection with the gathered dependencies.
+   */
+  public function gatherDependencies(Pool $pool, array $installed = []): static {
+    $new = clone $this;
+    $gatherer = new DependencyGatherer($new, $pool);
+    $gatherer->gatherDependencies();
+    return $new;
+  }
+
   /**
    * Convert the requests to an array
    *
@@ -64,6 +89,12 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    *   packageId?: int|null,
    *   type: Request::TYPE_*,
    *   versionConstraint?: string|null,
+   *   requiredBy: array<non-empty-string, array{
+   *     name: non-empty-string,
+   *     packageId?: int|null,
+   *     type: Request::TYPE_*,
+   *     versionConstraint?: string|null,
+   *   }>,
    * }>
    */
   public function toArray(): array {
