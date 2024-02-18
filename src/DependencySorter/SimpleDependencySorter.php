@@ -141,6 +141,7 @@ class SimpleDependencySorter {
       }
     }
 
+    // @phpstan-ignore-next-line
     return $missingDeps;
   }
 }

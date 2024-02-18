@@ -125,6 +125,7 @@ class Solver {
       /** @var ParsedRequest $request */
       $request = $operation['request'];
       $requiredBy = $request->getRequiredBy();
+      /** @var Operation[] $requiredByOperations */
       $requiredByOperations = array_values(
         array_filter(
           array_map(
@@ -160,5 +161,7 @@ class Solver {
     } elseif ($request->getType() === ParsedRequest::TYPE_UNINSTALL) {
       return Operation::uninstall($request->getName());
     }
+
+    throw new SolverException('Unknown request type ' . $request->getType());
   }
 }

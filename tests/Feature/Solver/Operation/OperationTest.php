@@ -17,8 +17,9 @@ it('can be instantiated', function () {
     ->and($operation->getRequiredBy())
     ->toBeEmpty();
 
-  $operation->setRequiredBy([1, 2, 3]);
-  expect($operation->getRequiredBy())->toBe([1, 2, 3]);
+  $operation2 = new Operation(Operation::TYPE_UNINSTALL, 'foo');
+  $operation->setRequiredBy([$operation2]);
+  expect($operation->getRequiredBy())->toBe([$operation2]);
 });
 
 it('can be instantiated using helper classes', function () {

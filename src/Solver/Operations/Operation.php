@@ -39,6 +39,7 @@ class Operation {
 
   /**
    * @param non-empty-string $type The type of the operation
+   * @phpstan-param Operation::TYPE_* $type
    * @param non-empty-string $name The name of the package
    * @param string|null $version The version of the package
    */
@@ -124,7 +125,11 @@ class Operation {
    *   type: Operation::TYPE_*,
    *   name: non-empty-string,
    *   version: string|null,
-   *   requiredBy: array[],
+   *   requiredBy: array<array{
+   *     type: Operation::TYPE_*,
+   *     name: non-empty-string,
+   *     version: string|null,
+   *   }>,
    * }
    */
   public function toArray(): array {

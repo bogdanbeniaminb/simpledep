@@ -10,6 +10,7 @@ use SimpleDep\Pool\Pool;
 use SimpleDep\Solver\DependencyGatherer;
 use Traversable;
 use z4kn4fein\SemVer\Constraints\Constraint;
+use z4kn4fein\SemVer\Version;
 
 /**
  * A collection of parsed requests
