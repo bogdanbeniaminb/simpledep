@@ -19,8 +19,8 @@ class RequestsCollection extends GenericRequestsCollection {
    */
   public function install(
     string $name,
-    Constraint|string|null $versionConstraint = null
-  ): static {
+    $versionConstraint = null
+  ) {
     if (!$versionConstraint) {
       $versionConstraint = Constraint::default();
     } elseif (is_string($versionConstraint)) {
@@ -40,8 +40,8 @@ class RequestsCollection extends GenericRequestsCollection {
    */
   public function update(
     string $name,
-    Constraint|string|null $versionConstraint = null
-  ): static {
+    $versionConstraint = null
+  ) {
     if (is_string($versionConstraint)) {
       $versionConstraint = Constraint::parse($versionConstraint);
     }
@@ -56,7 +56,7 @@ class RequestsCollection extends GenericRequestsCollection {
    * @param non-empty-string $name
    * @return $this
    */
-  public function uninstall(string $name): static {
+  public function uninstall(string $name) {
     $this->requests[] = new Request(Request::TYPE_UNINSTALL, $name);
     return $this;
   }
