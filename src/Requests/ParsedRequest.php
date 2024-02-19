@@ -82,17 +82,6 @@ class ParsedRequest extends Request {
   }
 
   /**
-   * Add the requests that require this.
-   *
-   * @param ParsedRequest $requiredBy
-   * @return $this
-   */
-  public function addRequiredBy(ParsedRequest $requiredBy): static {
-    $this->requiredBy[] = $requiredBy;
-    return $this;
-  }
-
-  /**
    * Set the requests that require this.
    *
    * @return ParsedRequest[] $requiredBy
