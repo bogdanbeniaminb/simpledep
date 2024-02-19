@@ -37,7 +37,7 @@ jobs:
           coverage: none
 
       # clear the dev files
-      - run: rm -rf tests phpstan.dist.neon phpunit.xml .gitignore .editorconfig .github .prettierrc .prettierignore
+      - run: rm -rf tests phpstan.dist.neon phpunit.xml .gitignore .editorconfig .github .prettierrc .prettierignore package.json package-lock.json
 
       # copy PHP 7.4 composer + workflows
       - run: cp -r build/target-repository/. .
