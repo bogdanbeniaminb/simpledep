@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SimpleDep\Requests;
 
 use Countable;
+use InvalidArgumentException;
 use IteratorAggregate;
 use Traversable;
 use z4kn4fein\SemVer\Constraints\Constraint;
@@ -130,7 +131,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    */
   public function merge($requests): static {
     if (!($requests instanceof static)) {
-      throw new \InvalidArgumentException(
+      throw new InvalidArgumentException(
         'The requests must be an instance of ' . static::class
       );
     }
@@ -184,7 +185,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @param null|Request::TYPE_* $type
    * @return bool
    */
-  public function contains(string $name, $type = null): bool {
+  public function contains(string $name, ?int $type = null): bool {
     return !empty(
       array_filter(
         $this->requests,

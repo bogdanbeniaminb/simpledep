@@ -16,7 +16,11 @@ interface RequestInterface {
    * @param non-empty-string $name
    * @param string|Version|Constraint|null $versionConstraint
    */
-  public function __construct(int $type, string $name, $versionConstraint = null);
+  public function __construct(
+    int $type,
+    string $name,
+    string|Version|Constraint|null $versionConstraint = null
+  );
 
   /**
    * Create a request from another request
@@ -25,6 +29,27 @@ interface RequestInterface {
    * @return static
    */
   public static function fromRequest(RequestInterface $request): static;
+
+  /**
+   * Get the type of the request
+   *
+   * @return int
+   */
+  public function getType(): int;
+
+  /**
+   * Get the name of the package
+   *
+   * @return non-empty-string
+   */
+  public function getName(): string;
+
+  /**
+   * Get the version constraint
+   *
+   * @return Constraint|null
+   */
+  public function getVersionConstraint(): ?Constraint;
 
   /**
    * @return array{

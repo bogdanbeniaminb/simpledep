@@ -73,7 +73,7 @@ class Solver {
 
     // Check if there are solutions.
     if (empty($this->requestSolutions)) {
-      throw new SolverException('No solution found');
+      return [];
     }
 
     // Return the first solution.
@@ -110,7 +110,8 @@ class Solver {
 
     // Generate the operations.
     $operations = [];
-    $operationsMap = new WeakMap();
+    /** @var WeakMap<ParsedRequest, Operation>|array<ParsedRequest, Operation> $operationsMap */
+    $operationsMap = class_exists(WeakMap::class) ? new WeakMap() : [];
     foreach ($solution as $step) {
       $operation = $this->generateOperation($step);
       $operationsMap[$step] = $operation;

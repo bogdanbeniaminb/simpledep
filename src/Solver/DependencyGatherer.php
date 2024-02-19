@@ -33,8 +33,8 @@ class DependencyGatherer {
    * @return ParsedRequestsCollection The requests with their dependencies filled in.
    */
   public function gatherDependencies(): ParsedRequestsCollection {
-    /** @var WeakMap<ParsedRequest, ParsedRequest[]> $dependencies */
-    $dependencies = new WeakMap();
+    /** @var WeakMap<ParsedRequest, ParsedRequest[]>|array<ParsedRequest, ParsedRequest[]> $dependencies */
+    $dependencies = class_exists(WeakMap::class) ? new WeakMap() : [];
 
     // Gather the dependencies for each request in a WeakMap.
     foreach ($this->requests as $request) {

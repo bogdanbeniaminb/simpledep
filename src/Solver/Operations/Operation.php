@@ -121,6 +121,7 @@ class Operation {
   /**
    * Convert the operation to an array
    *
+   * @param bool $nested Whether this is a nested request (should not include requiredBy).
    * @return array{
    *   type: Operation::TYPE_*,
    *   name: non-empty-string,
@@ -132,15 +133,20 @@ class Operation {
    *   }>,
    * }
    */
-  public function toArray(): array {
-    return [
+  public function toArray(bool $nested = false): array {
+    $result = [
       'type' => $this->type,
       'name' => $this->name,
       'version' => $this->version,
-      'requiredBy' => array_map(
-        static fn(Operation $operation): array => $operation->toArray(),
-        $this->requiredBy
-      ),
     ];
+
+    if (!$nested) {
+      $result['requiredBy'] = array_map(
+        static fn(Operation $operation): array => $operation->toArray(true),
+        $this->requiredBy
+      );
+    }
+
+    return $result;
   }
 }

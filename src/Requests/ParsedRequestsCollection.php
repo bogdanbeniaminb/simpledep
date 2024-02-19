@@ -77,7 +77,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    */
   public function gatherDependencies(Pool $pool, array $installed = []): static {
     $new = clone $this;
-    $gatherer = new DependencyGatherer($new, $pool);
+    $gatherer = new DependencyGatherer($new, $pool, $installed);
     $gatherer->gatherDependencies();
     return $new;
   }

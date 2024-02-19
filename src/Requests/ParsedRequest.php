@@ -127,26 +127,32 @@ class ParsedRequest extends Request {
   /**
    * Convert the request to an array
    *
+   * @param bool $nested Whether this is a nested request (should not include requiredBy).
    * @return array{
    *   type: Request::TYPE_*,
    *   name: non-empty-string,
    *   packageId: int|null,
    *   versionConstraint: string|null,
-   *   requiredBy: array<non-empty-string, array{
+   *   requiredBy?: array<non-empty-string, array{
    *     type: Request::TYPE_*,
    *     name: non-empty-string,
    *     versionConstraint: string|null,
    *   }>,
    * }
    */
-  public function toArray(): array {
-    return array_merge(parent::toArray(), [
+  public function toArray(bool $nested = false): array {
+    $result = array_merge(parent::toArray(), [
       'packageId' => $this->packageId,
       'version' => $this->version ? (string) $this->version : null,
-      'requiredBy' => array_map(
-        static fn(ParsedRequest $request) => $request->toArray(),
-        $this->requiredBy
-      ),
     ]);
+
+    if (!$nested) {
+      $result['requiredBy'] = array_map(
+        static fn(ParsedRequest $request) => $request->toArray(true),
+        $this->requiredBy
+      );
+    }
+
+    return $result;
   }
 }

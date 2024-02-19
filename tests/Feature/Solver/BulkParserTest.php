@@ -66,6 +66,9 @@ it('parses dependencies', function () {
     'boo' => [
       'version' => '1.0.0',
     ],
+    'bee' => [
+      'version' => '1.0.0',
+    ],
   ]);
 
   $solutions = $parser->parse();
@@ -91,8 +94,8 @@ it('parses dependencies', function () {
 it('parses conflicting dependencies', function () {
   $foo1 = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
   $foo2 = (new Package('foo', '1.0.1'))->addLink('require', 'bar', '>=1.0.1');
-  $bar1 = (new Package('bar', '1.0.0'));
-  $bar2 = (new Package('bar', '1.0.1'));
+  $bar1 = new Package('bar', '1.0.0');
+  $bar2 = new Package('bar', '1.0.1');
   $boo1 = (new Package('boo', '1.0.5'))->addLink('require', 'bar', '1.0.0');
   $boo2 = (new Package('boo', '1.0.7'))->addLink('require', 'bar', '1.0.1');
   $pool = (new Pool())
@@ -102,9 +105,7 @@ it('parses conflicting dependencies', function () {
     ->addPackage($bar2)
     ->addPackage($boo1)
     ->addPackage($boo2);
-  $requests = (new RequestsCollection())
-    ->install('foo', '1.0.1')
-    ->update('boo');
+  $requests = (new RequestsCollection())->install('foo', '1.0.1')->update('boo');
 
   $parser = new BulkParser($pool, $requests, [
     'boo' => [
@@ -114,4 +115,19 @@ it('parses conflicting dependencies', function () {
 
   $solutions = $parser->parse();
   expect($solutions)->toBeArray()->and(count($solutions))->toBeGreaterThan(0);
+});
+
+it('doesn\'t uninstall packages that are not installed', function () {
+  $bar1 = new Package('bar', '1.0.0');
+  $pool = (new Pool())->addPackage($bar1);
+  $requests = (new RequestsCollection())->uninstall('bar');
+
+  $parser = new BulkParser($pool, $requests, [
+    'boo' => [
+      'version' => '1.0.0',
+    ],
+  ]);
+
+  $solutions = $parser->parse();
+  expect($solutions)->toBeArray()->and(count($solutions))->toBe(0);
 });

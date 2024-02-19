@@ -30,7 +30,7 @@ class Request implements RequestInterface {
   public function __construct(
     protected int $type,
     protected string $name,
-    $versionConstraint = null
+    string|Version|Constraint|null $versionConstraint = null
   ) {
     if (!empty($versionConstraint)) {
       if (is_string($versionConstraint)) {
@@ -62,6 +62,11 @@ class Request implements RequestInterface {
     return $this->name;
   }
 
+  /**
+   * Get the versionConstraint of the package
+   *
+   * @return Constraint|null
+   */
   public function getVersionConstraint(): ?Constraint {
     return $this->versionConstraint;
   }
@@ -88,7 +93,7 @@ class Request implements RequestInterface {
   /**
    * Create a new request from a request
    *
-   * @param Request $request
+   * @param RequestInterface $request
    * @return static
    */
   public static function fromRequest(RequestInterface $request): static {

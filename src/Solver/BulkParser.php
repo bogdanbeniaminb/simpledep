@@ -91,6 +91,19 @@ class BulkParser {
       throw ParserException::noSolution();
     }
 
+    // Remove unnecessary requests from the solutions.
+    $solutions = array_map(
+      fn(ParsedRequestsCollection $solution) => $this->removeUnnecessaryRequests(
+        $solution
+      ),
+      $solutions
+    );
+
+    // Now filter out the solutions that have no requests.
+    $solutions = array_values(
+      array_filter($solutions, fn(ParsedRequestsCollection $solution) => count($solution))
+    );
+
     // Sort the solution steps by their dependencies.
     $solutions = array_map(
       fn(ParsedRequestsCollection $solution) => (new DependencySorter(
@@ -189,12 +202,12 @@ class BulkParser {
             $linkRequests->install($link['name'], $link['versionConstraint'] ?? '*');
           }
 
-          if (
-            $link['type'] === 'conflict' ||
-            $link['type'] === 'provide' ||
-            $link['type'] === 'replace'
-          ) {
+          if (in_array($link['type'], ['conflict', 'replace'])) {
             $linkRequests->uninstall($link['name']);
+          }
+
+          if ($link['type'] === 'provide') {
+            // TODO: Go through the installed array and the packages array and uninstall the ones that provide the same package.
           }
         }
 
@@ -261,5 +274,49 @@ class BulkParser {
    */
   protected function parseUninstallRequest(string $name): array {
     return [(new ParsedRequestsCollection())->uninstall($name)];
+  }
+
+  /**
+   * Remove the unnecessary requests.
+   *
+   * @param ParsedRequestsCollection $solution
+   * @return ParsedRequestsCollection
+   */
+  protected function removeUnnecessaryRequests(
+    ParsedRequestsCollection $solution
+  ): ParsedRequestsCollection {
+    return $solution->filter(
+      fn(ParsedRequest $request) => !$this->isUnnecesaryRequest($request, $solution)
+    );
+  }
+
+  /**
+   * Check if a request is unnecessary.
+   *
+   * @param ParsedRequest $request
+   * @param ParsedRequestsCollection $requests
+   * @return bool True if the request is unnecessary, false otherwise.
+   */
+  protected function isUnnecesaryRequest(
+    ParsedRequest $request,
+    ParsedRequestsCollection $requests
+  ): bool {
+    // If the request is an uninstall request, check if the package is actually installed.
+    if ($request->getType() === ParsedRequest::TYPE_UNINSTALL) {
+      return !isset($this->installed[$request->getName()]);
+    }
+
+    // If the request is an install request, check if the package with the exact version is already installed.
+    if ($request->getType() === ParsedRequest::TYPE_INSTALL) {
+      $installedVersion = $this->installed[$request->getName()]['version'] ?? null;
+      if (is_string($installedVersion)) {
+        $installedVersion = Version::parse($installedVersion);
+      }
+      if ($installedVersion) {
+        return $installedVersion->isEqual($request->getVersion());
+      }
+    }
+
+    return false;
   }
 }

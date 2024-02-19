@@ -64,7 +64,7 @@ class Package {
    * @param non-empty-string $name
    * @param string|Version|null $version
    */
-  public function __construct(string $name, $version = null) {
+  public function __construct(string $name, string|Version|null $version = null) {
     if (empty($name)) {
       throw new InvalidArgumentException('Package name cannot be empty');
     }

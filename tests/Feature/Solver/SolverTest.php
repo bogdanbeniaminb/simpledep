@@ -39,6 +39,9 @@ it('can solve requests', function () {
     'boo' => [
       'version' => '1.0.0',
     ],
+    'bee' => [
+      'version' => '1.0.0',
+    ],
   ]);
 
   expect($solver)
@@ -51,10 +54,14 @@ it('can solve requests', function () {
     ->toBeInstanceOf(Operation::class)
     ->and($solution['foo']->getType())
     ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['foo']->getVersion())
+    ->toBe('1.0.0')
     ->and($solution['boo'])
     ->toBeInstanceOf(Operation::class)
     ->and($solution['boo']->getType())
     ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['boo']->getVersion())
+    ->toBe('1.0.7')
     ->and($solution['bee'])
     ->toBeInstanceOf(Operation::class)
     ->and($solution['bee']->getType())
@@ -131,14 +138,14 @@ it('handles dependency packages', function () {
     ->toBe([$solution['foo']]);
 });
 
-it('handles uninstalling replaced packages', function () {
+it('handles uninstalling conflicting packages', function () {
   $foo = (new Package('foo', '1.0.0'))->addConflict('bar', '>=1.0.0');
   $bar = new Package('bar', '1.0.0');
   $pool = (new Pool())->addPackage($foo)->addPackage($bar);
   $requests = (new RequestsCollection())->install('foo', '>=1.0.0');
 
   $solver = new Solver($pool, $requests, [
-    'foo' => [
+    'bar' => [
       'version' => '1.0.0',
     ],
   ]);
@@ -155,3 +162,45 @@ it('handles uninstalling replaced packages', function () {
     ->and($solution['bar']->getRequiredBy())
     ->toBe([$solution['foo']]);
 });
+
+it('doesn\'t install an existing package again', function () {
+  $foo = new Package('foo', '1.0.0');
+  $pool = (new Pool())->addPackage($foo);
+  $requests = (new RequestsCollection())->install('foo', '>=1.0.0');
+
+  $solver = new Solver($pool, $requests, [
+    'foo' => [
+      'version' => '1.0.0',
+    ],
+  ]);
+
+  $solution = $solver->solve();
+  expect($solution)->toBeArray()->and(count($solution))->toBe(0);
+});
+
+it('doesn\'t uninstall packages that are not installed', function () {
+  $foo = new Package('foo', '1.0.0');
+  $pool = (new Pool())->addPackage($foo);
+  $requests = (new RequestsCollection())->uninstall('foo');
+
+  $solver = new Solver($pool, $requests);
+
+  $solution = $solver->solve();
+  expect($solution)->toBeArray()->and(count($solution))->toBe(0);
+});
+
+it(
+  'throws an error when a package is required by one request and is conflicted by another',
+  function () {
+    $foo = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
+    $bar = (new Package('bar', '1.0.0'))->addLink('conflict', 'baz', '>=1.0.0');
+    $baz = new Package('baz', '1.0.0');
+    $pool = (new Pool())->addPackage($foo)->addPackage($bar)->addPackage($baz);
+    $requests = (new RequestsCollection())
+      ->install('foo', '>=1.0.0')
+      ->install('baz', '>=1.0.0');
+
+    $solver = new Solver($pool, $requests);
+    expect(fn() => $solver->solve())->toThrow(SolverException::class);
+  }
+);
