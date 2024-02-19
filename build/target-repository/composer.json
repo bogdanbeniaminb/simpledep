@@ -1,0 +1,22 @@
+{
+  "name": "bogdanbeniaminb/simpledep",
+  "description": "Simple Dependency Solver for PHP",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Bogdan Barbu"
+    }
+  ],
+  "scripts": {
+  },
+  "require": {
+    "z4kn4fein/php-semver": "^2.0",
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "SimpleDep\\": "src/"
+    }
+  }
+}

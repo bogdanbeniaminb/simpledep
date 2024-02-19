@@ -11,7 +11,9 @@
   "scripts": {
     "test": "vendor/bin/pest",
     "test:coverage": "vendor/bin/pest --coverage --coverage-html=coverage",
-    "phpstan": "phpstan analyse --memory-limit=1G"
+    "phpstan": "phpstan analyse --memory-limit=1G",
+    "rector-downgrade-dry-run": "vendor/bin/rector process src --dry-run",
+    "rector-downgrade": "vendor/bin/rector process src"
   },
   "require": {
     "z4kn4fein/php-semver": "^2.0"
