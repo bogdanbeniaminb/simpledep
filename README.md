@@ -51,6 +51,67 @@ $installed = [
 
 $solver = new Solver($pool, $requests, $installed);
 $solution = $solver->solve();
+// print_r($solution);
 
-print_r($solution);
+// Convert the solution to an array of arrays.
+$solutionArray = array_map(
+  fn(Operation $operation) => $operation->toArray(),
+  $solution
+);
+echo (json_encode($solutionArray, JSON_PRETTY_PRINT));
+```
+
+The code above will output the following:
+
+```json
+{
+  "baz": {
+    "type": "install",
+    "name": "baz",
+    "version": "1.0.1",
+    "requiredBy": [{
+        "type": "install",
+        "name": "bar",
+        "version": "1.0.0"
+      },
+      {
+        "type": "install",
+        "name": "foo",
+        "version": "1.0.0"
+      }
+    ]
+  },
+  "bar": {
+    "type": "install",
+    "name": "bar",
+    "version": "1.0.0",
+    "requiredBy": [{
+      "type": "install",
+      "name": "foo",
+      "version": "1.0.0"
+    }]
+  },
+  "foo": {
+    "type": "install",
+    "name": "foo",
+    "version": "1.0.0",
+    "requiredBy": []
+  },
+  "boo": {
+    "type": "install",
+    "name": "boo",
+    "version": "1.0.7",
+    "requiredBy": []
+  },
+  "bee": {
+    "type": "uninstall",
+    "name": "bee",
+    "version": null,
+    "requiredBy": [{
+      "type": "install",
+      "name": "boo",
+      "version": "1.0.7"
+    }]
+  }
+}
 ```
