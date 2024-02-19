@@ -25,13 +25,6 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
   protected array $requests = [];
 
   /**
-   * The request class
-   *
-   * @var class-string<TRequest>
-   */
-  protected string $requestClass = Request::class;
-
-  /**
    * Create a new collection
    *
    * @param TRequest[] $requests

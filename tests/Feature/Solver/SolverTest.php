@@ -204,3 +204,38 @@ it(
     expect(fn() => $solver->solve())->toThrow(SolverException::class);
   }
 );
+
+it('retrieves whether operations were performed due to direct request or due to dependencies', function() {
+  $foo = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
+  $bar = (new Package('bar', '1.0.0'))->addLink('require', 'baz', '>=1.0.0');
+  $baz = new Package('baz', '1.0.0');
+  $pool = (new Pool())->addPackage($foo)->addPackage($bar)->addPackage($baz);
+  $requests = (new RequestsCollection())->install('foo', '>=1.0.0')->install('baz', '>=1.0.0');
+
+  $solver = new Solver($pool, $requests);
+
+  $solution = $solver->solve();
+  expect($solution)
+    ->toBeArray()
+    ->and(count($solution))
+    ->toBe(3)
+    ->and($solution)->toHaveKeys(['foo', 'bar', 'baz'])
+    ->and($solution['foo']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['foo']->getRequiredBy())
+    ->toBe([])
+    ->and($solution['foo']->wasAddedAsDependency())
+    ->toBeFalse()
+    ->and($solution['bar']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['bar']->getRequiredBy())
+    ->toBe([$solution['foo']])
+    ->and($solution['bar']->wasAddedAsDependency())
+    ->toBeTrue()
+    ->and($solution['baz']->getType())
+    ->toBe(Operation::TYPE_INSTALL)
+    ->and($solution['baz']->getRequiredBy())
+    ->toBe([$solution['bar'], $solution['foo']])
+    ->and($solution['baz']->wasAddedAsDependency())
+    ->toBeFalse();
+});

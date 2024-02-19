@@ -170,3 +170,33 @@ it('can remove duplicates', function () {
     ['type' => Request::TYPE_UPDATE, 'name' => 'boo', 'versionConstraint' => '>=1.0.0'],
   ]);
 });
+
+it('can check if requests exist by their name', function() {
+  $requests = new RequestsCollection();
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz');
+  expect($requests->contains('foo'))
+    ->toBeTrue()
+    ->and($requests->contains('bar'))
+    ->toBeTrue()
+    ->and($requests->contains('baz'))
+    ->toBeTrue()
+    ->and($requests->contains('boo'))
+    ->toBeFalse();
+});
+
+it('can find requests with a callback', function () {
+  $requests = new RequestsCollection();
+  $requests
+    ->install('foo', Constraint::parse('>=1.0.0'))
+    ->update('bar')
+    ->uninstall('baz');
+  $request = $requests->find(fn(Request $request) => $request->getName() === 'bar');
+  /** @var Request $request */
+  expect($request->getName())->toBe('bar');
+
+  $request = $requests->find(fn(Request $request) => $request->getName() === 'boo');
+  expect($request)->toBeNull();
+});

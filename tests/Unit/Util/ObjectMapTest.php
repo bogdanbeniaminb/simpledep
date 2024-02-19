@@ -50,7 +50,7 @@ it('deletes a key', function (bool $useFallback) {
   expect($objectMap->has($key2))->toBeFalse();
   expect($objectMap->get($key2))->toBeNull();
 
-  expect($objectMap->delete(new stdClass()))->not->toThrow(Throwable::class);
+  expect(fn() => $objectMap->delete(new stdClass()))->not->toThrow(Throwable::class);
 })->with([
   'WeakMap' => [false],
   'fallback' => [true],

@@ -136,6 +136,11 @@ class Solver {
         )
       );
       $operation['operation']->setRequiredBy($requiredByOperations);
+
+      // Set the flag if this operation is "new", i.e. installed as a dependency and not explicitly requested.
+      if ($requiredByOperations) {
+        $operation['operation']->setWasAddedAsDependency(!$this->operationWasExplicitlyRequested($operation['operation']));
+      }
     }
 
     // Return the operations.
@@ -164,5 +169,17 @@ class Solver {
     }
 
     throw new SolverException('Unknown request type ' . $request->getType());
+  }
+
+  /**
+   * Check if the operation was explicitly requested.
+   *
+   * @param Operation $operation
+   * @return bool
+   */
+  protected function operationWasExplicitlyRequested(Operation $operation): bool {
+    return $this->requests->contains(
+      $operation->getName(),
+    );
   }
 }

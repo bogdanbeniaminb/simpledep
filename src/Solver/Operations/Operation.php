@@ -38,6 +38,13 @@ class Operation {
   protected array $requiredBy = [];
 
   /**
+   * Whether the package is installed as a dependency, or it was requested by the user.
+   *
+   * @var bool
+   */
+  protected bool $wasAddedAsDependency = false;
+
+  /**
    * @param non-empty-string $type The type of the operation
    * @phpstan-param Operation::TYPE_* $type
    * @param non-empty-string $name The name of the package
@@ -119,6 +126,26 @@ class Operation {
   }
 
   /**
+   * Set whether the package is installed as a dependency
+   *
+   * @param bool $wasAddedAsDependency Whether the package is installed as a dependency
+   * @return $this
+   */
+  public function setWasAddedAsDependency(bool $wasAddedAsDependency): static {
+    $this->wasAddedAsDependency = $wasAddedAsDependency;
+    return $this;
+  }
+
+  /**
+   * Get whether the package is installed as a dependency
+   *
+   * @return bool Whether the package is installed as a dependency
+   */
+  public function wasAddedAsDependency(): bool {
+    return $this->wasAddedAsDependency;
+  }
+
+  /**
    * Convert the operation to an array
    *
    * @param bool $includeRequiredBy Whether to include the requiredBy field
@@ -126,10 +153,12 @@ class Operation {
    *   type: Operation::TYPE_*,
    *   name: non-empty-string,
    *   version: string|null,
+   *   installedAsDependency: bool,
    *   requiredBy?: array<array{
    *     type: Operation::TYPE_*,
    *     name: non-empty-string,
    *     version: string|null,
+   *     installedAsDependency: bool,
    *   }>,
    * }
    */
@@ -138,6 +167,7 @@ class Operation {
       'type' => $this->type,
       'name' => $this->name,
       'version' => $this->version,
+      'installedAsDependency' => $this->wasAddedAsDependency,
     ];
 
     if ($includeRequiredBy) {
