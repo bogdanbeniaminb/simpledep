@@ -121,28 +121,28 @@ class Operation {
   /**
    * Convert the operation to an array
    *
-   * @param bool $nested Whether this is a nested request (should not include requiredBy).
+   * @param bool $includeRequiredBy Whether to include the requiredBy field
    * @return array{
    *   type: Operation::TYPE_*,
    *   name: non-empty-string,
    *   version: string|null,
-   *   requiredBy: array<array{
+   *   requiredBy?: array<array{
    *     type: Operation::TYPE_*,
    *     name: non-empty-string,
    *     version: string|null,
    *   }>,
    * }
    */
-  public function toArray(bool $nested = false): array {
+  public function toArray(bool $includeRequiredBy = true): array {
     $result = [
       'type' => $this->type,
       'name' => $this->name,
       'version' => $this->version,
     ];
 
-    if (!$nested) {
+    if ($includeRequiredBy) {
       $result['requiredBy'] = array_map(
-        static fn(Operation $operation): array => $operation->toArray(true),
+        static fn(Operation $operation): array => $operation->toArray(false),
         $this->requiredBy
       );
     }

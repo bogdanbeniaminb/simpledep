@@ -101,7 +101,7 @@ class BulkParser {
 
     // Now filter out the solutions that have no requests.
     $solutions = array_values(
-      array_filter($solutions, fn(ParsedRequestsCollection $solution) => count($solution))
+      array_filter($solutions, fn(ParsedRequestsCollection $solution) => (bool) count($solution))
     );
 
     // Sort the solution steps by their dependencies.
@@ -312,7 +312,7 @@ class BulkParser {
       if (is_string($installedVersion)) {
         $installedVersion = Version::parse($installedVersion);
       }
-      if ($installedVersion) {
+      if ($installedVersion && $request->getVersion()) {
         return $installedVersion->isEqual($request->getVersion());
       }
     }

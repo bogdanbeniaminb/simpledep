@@ -11,7 +11,7 @@ use SimpleDep\Requests\RequestsCollection;
 use SimpleDep\Solver\Exceptions\ParserException;
 use SimpleDep\Solver\Exceptions\SolverException;
 use SimpleDep\Solver\Operations\Operation;
-use WeakMap;
+use SimpleDep\Utils\ObjectMap;
 use z4kn4fein\SemVer\Version;
 
 class Solver {
@@ -110,8 +110,8 @@ class Solver {
 
     // Generate the operations.
     $operations = [];
-    /** @var WeakMap<ParsedRequest, Operation>|array<ParsedRequest, Operation> $operationsMap */
-    $operationsMap = class_exists(WeakMap::class) ? new WeakMap() : [];
+    /** @var ObjectMap<ParsedRequest, Operation> */
+    $operationsMap = new ObjectMap();
     foreach ($solution as $step) {
       $operation = $this->generateOperation($step);
       $operationsMap[$step] = $operation;

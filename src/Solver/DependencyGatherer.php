@@ -8,7 +8,7 @@ use SimpleDep\DependencySorter\Exceptions\DependencyException;
 use SimpleDep\Pool\Pool;
 use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
-use WeakMap;
+use SimpleDep\Utils\ObjectMap;
 use z4kn4fein\SemVer\Constraints\Constraint;
 use z4kn4fein\SemVer\Version;
 
@@ -33,12 +33,12 @@ class DependencyGatherer {
    * @return ParsedRequestsCollection The requests with their dependencies filled in.
    */
   public function gatherDependencies(): ParsedRequestsCollection {
-    /** @var WeakMap<ParsedRequest, ParsedRequest[]>|array<ParsedRequest, ParsedRequest[]> $dependencies */
-    $dependencies = class_exists(WeakMap::class) ? new WeakMap() : [];
+    /** @var ObjectMap<ParsedRequest, ParsedRequest[]> $dependencies */
+    $dependencies = new ObjectMap();
 
     // Gather the dependencies for each request in a WeakMap.
     foreach ($this->requests as $request) {
-      $dependencies[$request] = $this->gatherRequestDependencies($request);
+      $dependencies->set($request, $this->gatherRequestDependencies($request));
     }
 
     // Set the dependencies for each request.

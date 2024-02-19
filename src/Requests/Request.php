@@ -98,6 +98,7 @@ class Request implements RequestInterface {
    */
   public static function fromRequest(RequestInterface $request): static {
     return new static(
+      // @phpstan-ignore-next-line
       $request->getType(),
       $request->getName(),
       $request->getVersionConstraint()

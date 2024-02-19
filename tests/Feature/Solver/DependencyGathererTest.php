@@ -35,6 +35,7 @@ it('gathers dependencies', function () {
     fn(ParsedRequest $request) => $request->getName() === 'bar'
   );
   expect($barRequest)->not->toBeNull();
+  /** @var ParsedRequest $barRequest */
   expect($getRequestIds($barRequest->getRequiredBy()))->toBe(
     [$foo->getId()],
     'bar is required by foo'
@@ -42,6 +43,7 @@ it('gathers dependencies', function () {
   $bazRequest = $requests->find(
     fn(ParsedRequest $request) => $request->getName() === 'baz'
   );
+  /** @var ParsedRequest $bazRequest */
   expect($getRequestIds($bazRequest->getRequiredBy()))->toBe(
     [$foo->getId(), $bar->getId()],
     'baz is required by foo and bar'
@@ -76,6 +78,7 @@ it('gathers uninstall dependencies', function () {
     fn(ParsedRequest $request) => $request->getName() === 'bar'
   );
   expect($barRequest)->not->toBeNull();
+  /** @var ParsedRequest $barRequest */
   expect($getRequestIds($barRequest->getRequiredBy()))->toBe(
     [$foo->getId()],
     'bar is required by foo'

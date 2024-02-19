@@ -90,7 +90,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    *   packageId?: int|null,
    *   type: Request::TYPE_*,
    *   versionConstraint?: string|null,
-   *   requiredBy: array<non-empty-string, array{
+   *   requiredBy?: array<non-empty-string, array{
    *     name: non-empty-string,
    *     packageId?: int|null,
    *     type: Request::TYPE_*,

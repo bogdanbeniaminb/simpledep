@@ -127,7 +127,7 @@ class ParsedRequest extends Request {
   /**
    * Convert the request to an array
    *
-   * @param bool $nested Whether this is a nested request (should not include requiredBy).
+   * @param bool $includeRequiredBy Whether to include the requiredBy field
    * @return array{
    *   type: Request::TYPE_*,
    *   name: non-empty-string,
@@ -140,15 +140,15 @@ class ParsedRequest extends Request {
    *   }>,
    * }
    */
-  public function toArray(bool $nested = false): array {
+  public function toArray(bool $includeRequiredBy = true): array {
     $result = array_merge(parent::toArray(), [
       'packageId' => $this->packageId,
       'version' => $this->version ? (string) $this->version : null,
     ]);
 
-    if (!$nested) {
+    if ($includeRequiredBy) {
       $result['requiredBy'] = array_map(
-        static fn(ParsedRequest $request) => $request->toArray(true),
+        static fn(ParsedRequest $request) => $request->toArray(false),
         $this->requiredBy
       );
     }
