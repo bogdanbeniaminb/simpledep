@@ -213,3 +213,47 @@ it(
       ->toBe([$bazRequest['id']], 'Boo should depend on Baz');
   }
 );
+
+it('throws error if packages not found in pool', function() {
+  $requests = new ParsedRequestsCollection();
+  $foo = new Package('foo', '1.0.0');
+  $foo->setId(1)->addDependency('bar', '1.0.0');
+  $bar = new Package('bar', '1.0.0');
+  $bar->setId(2)->addDependency('baz', '1.0.0');
+  $baz = new Package('baz', '1.0.0');
+  $baz->setId(3);
+  $pool = new Pool();
+  $pool->addPackage($foo)->addPackage($bar)->ensurePackageIds();
+
+  $requests->install($foo)->install($bar)->install($baz);
+  $gatherer = new DependencySorter($requests, $pool);
+  $requests = $gatherer->sort();
+})->throws(DependencyException::class, 'Package not found');
+
+it('throws an error if a request has no package ID', function() {
+  $requests = new ParsedRequestsCollection();
+  $foo = new Package('foo', '1.0.0');
+  $pool = new Pool();
+  $pool->addPackage($foo);
+  $requests->addRequest(ParsedRequest::install($foo));
+  $gatherer = new DependencySorter($requests, $pool);
+  $requests = $gatherer->sort();
+})->throws(DependencyException::class, 'Package ID not found');
+
+it('throws an error if there\'s a request that needs a package that is installed with a wrong version and isn\'t planned for installing', function() {
+  $requests = new ParsedRequestsCollection();
+  $foo = new Package('foo', '1.0.0');
+  $foo->setId(1)->addDependency('bar', '2.0.0');
+  $bar = new Package('bar', '2.0.0');
+  $bar->setId(2);
+  $pool = new Pool();
+  $pool->addPackage($foo)->addPackage($bar)->ensurePackageIds();
+  $requests->install($foo);
+
+  $gatherer = new DependencySorter($requests, $pool, [
+    'bar' => [
+      'version' => '1.0.0',
+    ],
+  ]);
+  $requests = $gatherer->sort();
+})->throws(DependencyException::class, 'Installed version does not satisfy');
