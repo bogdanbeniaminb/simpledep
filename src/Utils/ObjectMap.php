@@ -6,8 +6,6 @@ declare(strict_types=1);
 namespace SimpleDep\Utils;
 
 use ArrayAccess;
-use ArrayIterator;
-use Iterator;
 use IteratorAggregate;
 use Traversable;
 use WeakMap;
@@ -45,8 +43,11 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
    */
   private bool $useFallback = false;
 
-  public function __construct() {
-    if (class_exists(WeakMap::class)) {
+  /**
+   * @param bool $forceFallback Whether to force the use of the fallback map
+   */
+  public function __construct(bool $forceFallback = false) {
+    if (class_exists(WeakMap::class) && !$forceFallback) {
       $this->weakMap = new WeakMap();
     } else {
       $this->useFallback = true;
@@ -86,6 +87,11 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
           return $entry['value'];
         }
       }
+      return null;
+    }
+
+    // @phpstan-ignore-next-line
+    if (!$this->weakMap->offsetExists($key)) {
       return null;
     }
 
