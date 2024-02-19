@@ -19,7 +19,7 @@ jobs:
 
       - name: Install composer dependencies
         run: |
-          composer install
+          composer install --no-progress --no-suggest --no-interaction --no-scripts --no-dev
 
       - name: get rector to "rector-local" directory, to avoid downgrading itself in the /vendor
         run: |
