@@ -76,19 +76,52 @@ class BulkParser {
   }
 
   /**
-   * Parse the dependencies
+   * Parse the dependencies and return the valid solutions.
    *
    * @return ParsedRequestsCollection[]
    * @throws ParserException
    */
   public function parse(): array {
-    $solutions = $this->parseRequests($this->requests);
-    $solutions = array_filter($solutions, function (ParsedRequestsCollection $solution) {
-      return (new RequestCompatibilityChecker($solution, $this->installed))->check();
-    });
+    $solutions = array_values(
+      array_filter(
+        $this->getAllSolutions(true),
+        static fn(ParsedRequestsCollection $solution) => $solution->isValid()
+      )
+    );
 
     if (!count($solutions) && $this->throwExceptions) {
       throw ParserException::noSolution();
+    }
+
+    // Now filter out the solutions that have no requests.
+    $solutions = array_values(
+      array_filter(
+        $solutions,
+        static fn(ParsedRequestsCollection $solution) => (bool) count($solution)
+      )
+    );
+
+    return $solutions;
+  }
+
+  /**
+   * Parse the dependencies and return the solutions, valid or not.
+   *
+   * @param bool $validOnly Whether to return only the valid solutions.
+   * @return ParsedRequestsCollection[]
+   * @throws ParserException
+   */
+  public function getAllSolutions($validOnly = false): array {
+    $solutions = $this->parseRequests($this->requests);
+
+    // If we only want the valid solutions, filter them out.
+    if ($validOnly) {
+      $solutions = array_values(
+        array_filter(
+          $solutions,
+          static fn(ParsedRequestsCollection $solution) => $solution->isValid()
+        )
+      );
     }
 
     // Remove unnecessary requests from the solutions.
@@ -99,18 +132,11 @@ class BulkParser {
       $solutions
     );
 
-    // Now filter out the solutions that have no requests.
-    $solutions = array_values(
-      array_filter($solutions, fn(ParsedRequestsCollection $solution) => (bool) count($solution))
-    );
-
-    // Sort the solution steps by their dependencies.
+    // Set the environment on the solutions and sort the steps.
     $solutions = array_map(
-      fn(ParsedRequestsCollection $solution) => (new DependencySorter(
-        $solution,
-        $this->pool,
-        $this->installed
-      ))->sort(),
+      fn(ParsedRequestsCollection $solution) => $solution
+        ->setEnvironment($this->pool, $this->installed)
+        ->sortSteps(),
       $solutions
     );
 

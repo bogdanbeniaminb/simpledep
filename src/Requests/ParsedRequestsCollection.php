@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SimpleDep\Requests;
 
 use RuntimeException;
+use SimpleDep\DependencySorter\DependencySorter;
 use SimpleDep\Package\Package;
 use SimpleDep\Pool\Pool;
 use SimpleDep\Solver\DependencyGatherer;
+use SimpleDep\Solver\RequestCompatibilityChecker;
 use Traversable;
 use z4kn4fein\SemVer\Constraints\Constraint;
 use z4kn4fein\SemVer\Version;
@@ -18,6 +20,51 @@ use z4kn4fein\SemVer\Version;
  * @extends GenericRequestsCollection<ParsedRequest>
  */
 class ParsedRequestsCollection extends GenericRequestsCollection {
+  /**
+   * The pool of packages
+   *
+   * @var Pool|null
+   */
+  protected ?Pool $pool;
+
+  /**
+   * The installed packages.
+   *
+   * @var array<non-empty-string, array{
+   *   version: Version|string,
+   * }>
+   */
+  protected array $installed = [];
+
+  /**
+   * Create a new collection with the given environment.
+   *
+   * @param Pool $pool The pool of packages
+   * @param array<non-empty-string, array{
+   *   version: Version|string,
+   * }> $installed The installed packages
+   * @return static
+   */
+  public function setEnvironment(Pool $pool, array $installed = []): static {
+    $new = clone $this;
+    $new->pool = $pool;
+    $new->installed = $installed;
+    return $new;
+  }
+
+  /**
+   * Sort the steps and return a new collection with the sorted steps. Needs the environment to be set first.
+   *
+   * @return static
+   */
+  public function sortSteps(): static {
+    return (new DependencySorter(
+      $this,
+      $this->pool ?: new Pool(),
+      $this->installed
+    ))->sort();
+  }
+
   /**
    * Install a package
    *
@@ -80,6 +127,15 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
     $gatherer = new DependencyGatherer($new, $pool, $installed);
     $gatherer->gatherDependencies();
     return $new;
+  }
+
+  /**
+   * Check the compatibility of the requests.
+   *
+   * @return bool True if the requests are compatible, false otherwise.
+   */
+  public function isValid(): bool {
+    return (new RequestCompatibilityChecker($this, $this->installed))->check();
   }
 
   /**

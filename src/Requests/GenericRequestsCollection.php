@@ -86,7 +86,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    */
   public function slice(int $offset, ?int $length = null): static {
     $new = new static();
-    $new->requests = array_values(array_slice($this->requests, $offset, $length));
+    $new->requests = array_slice($this->requests, $offset, $length);
     return $new;
   }
 

@@ -139,7 +139,9 @@ class Solver {
 
       // Set the flag if this operation is "new", i.e. installed as a dependency and not explicitly requested.
       if ($requiredByOperations) {
-        $operation['operation']->setWasAddedAsDependency(!$this->operationWasExplicitlyRequested($operation['operation']));
+        $operation['operation']->setWasAddedAsDependency(
+          !$this->operationWasExplicitlyRequested($operation['operation'])
+        );
       }
     }
 
@@ -178,8 +180,6 @@ class Solver {
    * @return bool
    */
   protected function operationWasExplicitlyRequested(Operation $operation): bool {
-    return $this->requests->contains(
-      $operation->getName(),
-    );
+    return $this->requests->contains($operation->getName());
   }
 }
