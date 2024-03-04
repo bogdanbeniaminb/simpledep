@@ -141,6 +141,20 @@ class Package {
   }
 
   /**
+   * Returns a link by name
+   *
+   * @param non-empty-string $name
+   * @return array{
+   *   type: non-empty-string,
+   *   name: non-empty-string,
+   *   versionConstraint?: Constraint|null,
+   * }|null
+   */
+  public function getLinkByName(string $name): ?array {
+    return $this->links[$name] ?? null;
+  }
+
+  /**
    * Add a link to another package
    *
    * @param non-empty-string $name

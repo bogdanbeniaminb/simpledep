@@ -27,13 +27,20 @@ it('sets links - requires', function () {
   $package = new Package('foo', '1.0.0');
   $constraint = Constraint::parse('>=1.0.4');
   $package->addLink('require', 'bar', $constraint);
-  expect($package->getLinks())->toBe([
-    'bar' => [
+  expect($package->getLinks())
+    ->toBe([
+      'bar' => [
+        'type' => 'require',
+        'name' => 'bar',
+        'versionConstraint' => $constraint,
+      ],
+    ])
+    ->and($package->getLinkByName('bar'))
+    ->toBe([
       'type' => 'require',
       'name' => 'bar',
       'versionConstraint' => $constraint,
-    ],
-  ]);
+    ]);
 
   $constraint2 = Constraint::parse('>=1.0.5');
   $package->addDependency('baz', $constraint2);
