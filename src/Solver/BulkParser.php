@@ -11,6 +11,7 @@ use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
 use SimpleDep\Requests\Request;
 use SimpleDep\Requests\RequestsCollection;
+use SimpleDep\Requests\ValidatedParsedRequestsCollection;
 use SimpleDep\Solver\Exceptions\ParserException;
 use z4kn4fein\SemVer\Constraints\Constraint;
 use z4kn4fein\SemVer\Version;
@@ -85,7 +86,7 @@ class BulkParser {
     $solutions = array_values(
       array_filter(
         $this->getAllSolutions(true),
-        static fn(ParsedRequestsCollection $solution) => $solution->isValid()
+        static fn(ValidatedParsedRequestsCollection $solution) => $solution->isValid()
       )
     );
 
@@ -97,7 +98,7 @@ class BulkParser {
     $solutions = array_values(
       array_filter(
         $solutions,
-        static fn(ParsedRequestsCollection $solution) => (bool) count($solution)
+        static fn(ValidatedParsedRequestsCollection $solution) => (bool) count($solution)
       )
     );
 
@@ -108,35 +109,45 @@ class BulkParser {
    * Parse the dependencies and return the solutions, valid or not.
    *
    * @param bool $validOnly Whether to return only the valid solutions.
-   * @return ParsedRequestsCollection[]
+   * @return ValidatedParsedRequestsCollection[]
    * @throws ParserException
    */
-  public function getAllSolutions($validOnly = false): array {
+  public function getAllSolutions(bool $validOnly = false): array {
     $solutions = $this->parseRequests($this->requests);
 
-    // If we only want the valid solutions, filter them out.
+    // Transform the solutions into ValidatedParsedRequestsCollection objects, with the environment set.
+    $solutions = array_map(
+      fn(
+        ParsedRequestsCollection $solution
+      ) => ValidatedParsedRequestsCollection::fromParsedRequestsCollection(
+        $solution,
+        $this->pool,
+        $this->installed
+      ),
+      $solutions
+    );
+
+    // If we only want the valid solutions, filter them out, to avoid unnecessary operations.
     if ($validOnly) {
       $solutions = array_values(
         array_filter(
           $solutions,
-          static fn(ParsedRequestsCollection $solution) => $solution->isValid()
+          static fn(ValidatedParsedRequestsCollection $solution) => $solution->isValid()
         )
       );
     }
 
     // Remove unnecessary requests from the solutions.
     $solutions = array_map(
-      fn(ParsedRequestsCollection $solution) => $this->removeUnnecessaryRequests(
+      fn(ValidatedParsedRequestsCollection $solution) => $this->removeUnnecessaryRequests(
         $solution
       ),
       $solutions
     );
 
-    // Set the environment on the solutions and sort the steps.
+    // Sort the steps.
     $solutions = array_map(
-      fn(ParsedRequestsCollection $solution) => $solution
-        ->setEnvironment($this->pool, $this->installed)
-        ->sortSteps(),
+      fn(ValidatedParsedRequestsCollection $solution) => $solution->sortSteps(),
       $solutions
     );
 
@@ -305,8 +316,9 @@ class BulkParser {
   /**
    * Remove the unnecessary requests.
    *
-   * @param ParsedRequestsCollection $solution
-   * @return ParsedRequestsCollection
+   * @template TCollection of ParsedRequestsCollection
+   * @param TCollection $solution
+   * @return TCollection
    */
   protected function removeUnnecessaryRequests(
     ParsedRequestsCollection $solution

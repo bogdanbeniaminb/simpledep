@@ -82,7 +82,7 @@ class ParsedRequest extends Request {
   }
 
   /**
-   * Set the requests that require this.
+   * Get the requests that require this.
    *
    * @return ParsedRequest[] $requiredBy
    */

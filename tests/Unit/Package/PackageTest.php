@@ -80,6 +80,7 @@ it('sets links - conflicts', function () {
 it('doesn\'t set links with invalid type', function () {
   $package = new Package('foo', '1.0.0');
   expect(
+    // @phpstan-ignore-next-line
     fn() => $package->addLink('invalid', 'bar', Constraint::parse('>=1.0.4'))
   )->toThrow('Invalid');
 });

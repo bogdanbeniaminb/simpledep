@@ -47,7 +47,7 @@ expect()->extend('toBeOne', function () {
  *   name: non-empty-string,
  *   version: non-empty-string,
  *   links?: array<array{
- *     type: non-empty-string,
+ *     type: key-of<Package::SUPPORTED_LINK_TYPES>,
  *     name: non-empty-string,
  *     versionConstraint: non-empty-string|null,
  *    }>,

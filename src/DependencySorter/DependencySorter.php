@@ -12,6 +12,9 @@ use SimpleDep\Requests\ParsedRequestsCollection;
 use z4kn4fein\SemVer\Constraints\Constraint;
 use z4kn4fein\SemVer\Version;
 
+/**
+ * @template TCollection of ParsedRequestsCollection
+ */
 class DependencySorter {
   /**
    * The pool of packages
@@ -32,7 +35,7 @@ class DependencySorter {
   /**
    * The requests.
    *
-   * @var ParsedRequestsCollection
+   * @var TCollection
    */
   protected ParsedRequestsCollection $requests;
 
@@ -48,7 +51,7 @@ class DependencySorter {
   protected array $requestsData = [];
 
   /**
-   * @param ParsedRequestsCollection $requests The requests
+   * @param TCollection $requests The requests
    * @param Pool $pool The pool of packages
    * @param array<non-empty-string, array{
    *   version: Version|string,
@@ -68,7 +71,7 @@ class DependencySorter {
    * Sort the requests in the order of their dependencies (the order in which they should be installed).
    * Both "requires" and "conflicts" are taken into account and the requests are sorted accordingly.
    *
-   * @return ParsedRequestsCollection
+   * @return TCollection
    */
   public function sort(): ParsedRequestsCollection {
     // Make sure the requests lists doesn't contain any duplicates.
@@ -81,7 +84,8 @@ class DependencySorter {
     $this->sortRequests();
 
     // Create the new requests collection.
-    $requests = new ParsedRequestsCollection();
+    $class = get_class($this->requests);
+    $requests = $class::copy($this->requests, []);
     foreach ($this->requestsData as $requestData) {
       $requests->addRequest($requestData['request']);
     }

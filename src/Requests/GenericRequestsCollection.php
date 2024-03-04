@@ -85,7 +85,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @return static
    */
   public function slice(int $offset, ?int $length = null): static {
-    $new = new static();
+    $new = static::copy($this);
     $new->requests = array_slice($this->requests, $offset, $length);
     return $new;
   }
@@ -105,13 +105,31 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
   }
 
   /**
+   * Clone the collection and optionally replace the requests.
+   *
+   * @param static $collection
+   * @param null|TRequest[] $requests
+   * @return static
+   */
+  public static function copy(
+    GenericRequestsCollection $collection,
+    ?array $requests = null
+  ): static {
+    $new = clone $collection;
+    if ($requests !== null) {
+      $new->requests = $requests;
+    }
+    return $new;
+  }
+
+  /**
    * Append requests to the collection.
    *
    * @param TRequest ...$requests
    * @return static
    */
   public function append(Request ...$requests): static {
-    $new = clone $this;
+    $new = static::copy($this);
     $new->requests = array_merge($new->requests, $requests);
     return $new;
   }
@@ -140,7 +158,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @return static
    */
   public function filter(callable $callback): static {
-    $new = new static();
+    $new = static::copy($this);
     $new->requests = array_values(array_filter($this->requests, $callback));
     return $new;
   }
@@ -206,6 +224,6 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
       $newRequests[] = $request;
     }
 
-    return new static($newRequests);
+    return static::copy($this, $newRequests);
   }
 }

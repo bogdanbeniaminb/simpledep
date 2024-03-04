@@ -14,7 +14,7 @@ class Package {
    * }>
    * @internal
    */
-  public static array $supportedLinkTypes = [
+  const SUPPORTED_LINK_TYPES = [
     'require' => ['description' => 'requires', 'type' => Link::TYPE_REQUIRE],
     'conflict' => ['description' => 'conflicts', 'type' => Link::TYPE_CONFLICT],
     'provide' => ['description' => 'provides', 'type' => Link::TYPE_PROVIDE],
@@ -51,7 +51,7 @@ class Package {
    * The package links
    *
    * @var array<non-empty-string, array{
-   *   type: non-empty-string,
+   *   type: key-of<Package::SUPPORTED_LINK_TYPES>,
    *   name: non-empty-string,
    *   versionConstraint?: Constraint|null,
    * }>
@@ -131,7 +131,7 @@ class Package {
    * Returns the package links
    *
    * @return array<non-empty-string, array{
-   *   type: non-empty-string,
+   *   type: key-of<Package::SUPPORTED_LINK_TYPES>,
    *   name: non-empty-string,
    *   versionConstraint?: Constraint|null,
    * }>
@@ -145,7 +145,7 @@ class Package {
    *
    * @param non-empty-string $name
    * @return array{
-   *   type: non-empty-string,
+   *   type: key-of<Package::SUPPORTED_LINK_TYPES>,
    *   name: non-empty-string,
    *   versionConstraint?: Constraint|null,
    * }|null
@@ -159,11 +159,12 @@ class Package {
    *
    * @param non-empty-string $name
    * @param non-empty-string $type
+   * @phpstan-param key-of<Package::SUPPORTED_LINK_TYPES> $type
    * @param string|Constraint|null $versionConstraint
    * @return $this
    */
   public function addLink(string $type, string $name, $versionConstraint = null): static {
-    if (!isset(self::$supportedLinkTypes[$type])) {
+    if (!isset(self::SUPPORTED_LINK_TYPES[$type])) {
       throw new InvalidArgumentException('Invalid link type: ' . $type);
     }
 
