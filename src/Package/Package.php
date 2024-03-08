@@ -64,7 +64,7 @@ class Package {
    * @param non-empty-string $name
    * @param string|Version|null $version
    */
-  public function __construct(string $name, string|Version|null $version = null) {
+  public function __construct(string $name, $version = null) {
     if (empty($name)) {
       throw new InvalidArgumentException('Package name cannot be empty');
     }
@@ -90,7 +90,7 @@ class Package {
    * @param int $id
    * @return $this
    */
-  public function setId(int $id): static {
+  public function setId(int $id) {
     $this->id = $id;
     return $this;
   }
@@ -119,7 +119,7 @@ class Package {
    * @param string|Version $version
    * @return $this
    */
-  public function setVersion($version): static {
+  public function setVersion($version) {
     if (is_string($version)) {
       $version = Version::parseOrNull($version) ?: Version::parse('0.0.0');
     }
@@ -163,7 +163,7 @@ class Package {
    * @param string|Constraint|null $versionConstraint
    * @return $this
    */
-  public function addLink(string $type, string $name, $versionConstraint = null): static {
+  public function addLink(string $type, string $name, $versionConstraint = null) {
     if (!isset(self::SUPPORTED_LINK_TYPES[$type])) {
       throw new InvalidArgumentException('Invalid link type: ' . $type);
     }
@@ -190,7 +190,7 @@ class Package {
    * @param string|Constraint|null $versionConstraint
    * @return $this
    */
-  public function addDependency(string $name, $versionConstraint = '*'): static {
+  public function addDependency(string $name, $versionConstraint = '*') {
     return $this->addLink('require', $name, $versionConstraint);
   }
 
@@ -201,7 +201,7 @@ class Package {
    * @param string|Constraint|null $versionConstraint
    * @return $this
    */
-  public function addConflict(string $name, $versionConstraint = '*'): static {
+  public function addConflict(string $name, $versionConstraint = '*') {
     return $this->addLink('conflict', $name, $versionConstraint);
   }
 }

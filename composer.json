@@ -9,32 +9,14 @@
     }
   ],
   "scripts": {
-    "test": "vendor/bin/pest",
-    "test:coverage": "vendor/bin/pest --coverage --coverage-html=coverage",
-    "phpstan": "phpstan analyse --memory-limit=1G",
-    "rector-downgrade-dry-run": "vendor/bin/rector process src --dry-run",
-    "rector-downgrade": "vendor/bin/rector process src"
   },
   "require": {
-    "z4kn4fein/php-semver": "^2.0"
+    "z4kn4fein/php-semver": "^2.0",
+    "php": ">=7.4"
   },
   "autoload": {
     "psr-4": {
       "SimpleDep\\": "src/"
-    }
-  },
-  "require-dev": {
-    "pestphp/pest": "^2.33",
-    "phpstan/phpstan": "^1.10",
-    "rector/rector": "^1.0",
-    "illuminate/collections": "^10.44"
-  },
-  "config": {
-    "allow-plugins": {
-      "pestphp/pest-plugin": true
-    },
-    "platform": {
-      "php": "8.2"
     }
   }
 }

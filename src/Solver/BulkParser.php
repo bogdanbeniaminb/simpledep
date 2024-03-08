@@ -98,7 +98,7 @@ class BulkParser {
    * @param bool $throwExceptions
    * @return static
    */
-  public function setThrowExceptions(bool $throwExceptions): static {
+  public function setThrowExceptions(bool $throwExceptions) {
     $this->throwExceptions = $throwExceptions;
     return $this;
   }
@@ -109,7 +109,7 @@ class BulkParser {
    * @param bool $isFirstLevel
    * @return static
    */
-  protected function setIsFirstLevel(bool $isFirstLevel): static {
+  protected function setIsFirstLevel(bool $isFirstLevel) {
     $this->isFirstLevel = $isFirstLevel;
     return $this;
   }
