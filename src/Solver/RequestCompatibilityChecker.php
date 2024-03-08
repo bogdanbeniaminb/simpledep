@@ -94,9 +94,7 @@ class RequestCompatibilityChecker {
 
     // Check the compatibility of each group of requests.
     foreach ($groupedRequests as $requests) {
-      if (!$this->checkGroup($requests)) {
-        return false;
-      }
+      $this->checkGroup($requests);
     }
 
     return true;

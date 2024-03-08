@@ -45,6 +45,13 @@ class Operation {
   protected bool $wasAddedAsDependency = false;
 
   /**
+   * The ID of the package
+   *
+   * @var int|null
+   */
+  protected ?int $packageId = null;
+
+  /**
    * @param non-empty-string $type The type of the operation
    * @phpstan-param Operation::TYPE_* $type
    * @param non-empty-string $name The name of the package
@@ -63,8 +70,12 @@ class Operation {
    * @param string|null $version The version of the package
    * @return Operation
    */
-  public static function install(string $name, ?string $version = null): Operation {
-    return new Operation(self::TYPE_INSTALL, $name, $version);
+  public static function install(
+    string $name,
+    ?string $version = null,
+    ?int $packageId = null
+  ): Operation {
+    return (new Operation(self::TYPE_INSTALL, $name, $version))->setPackageId($packageId);
   }
 
   /**
@@ -146,6 +157,26 @@ class Operation {
   }
 
   /**
+   * Set the ID of the package
+   *
+   * @param int|null $packageId The ID of the package
+   * @return $this
+   */
+  public function setPackageId(?int $packageId): static {
+    $this->packageId = $packageId;
+    return $this;
+  }
+
+  /**
+   * Get the ID of the package
+   *
+   * @return int|null The ID of the package
+   */
+  public function getPackageId(): ?int {
+    return $this->packageId;
+  }
+
+  /**
    * Convert the operation to an array
    *
    * @param bool $includeRequiredBy Whether to include the requiredBy field
@@ -153,11 +184,13 @@ class Operation {
    *   type: Operation::TYPE_*,
    *   name: non-empty-string,
    *   version: string|null,
+   *   packageId: int|null,
    *   installedAsDependency: bool,
    *   requiredBy?: array<array{
    *     type: Operation::TYPE_*,
    *     name: non-empty-string,
    *     version: string|null,
+   *     packageId: int|null,
    *     installedAsDependency: bool,
    *   }>,
    * }
@@ -167,6 +200,7 @@ class Operation {
       'type' => $this->type,
       'name' => $this->name,
       'version' => $this->version,
+      'packageId' => $this->packageId,
       'installedAsDependency' => $this->wasAddedAsDependency,
     ];
 

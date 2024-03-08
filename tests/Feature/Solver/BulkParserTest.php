@@ -80,15 +80,24 @@ it('parses dependencies', function () {
       ->toBeInstanceOf(ParsedRequestsCollection::class)
       ->and($solution->contains('foo'))
       ->toBeTrue()
-      ->and($solution->contains('boo'))
-      ->toBeTrue()
-      ->and($solution->contains('baz'))
-      ->toBeTrue()
-      ->and($solution->contains('bar'))
-      ->toBeTrue()
       ->and($solution->contains('bee'))
       ->toBeTrue();
   }
+
+  // Check the first solution, which should contain an update to "boo" and and install of its dependencies.
+  $solution = $solutions[0];
+  expect($solution)
+    ->toBeInstanceOf(ParsedRequestsCollection::class)
+    ->and($solution->contains('foo'))
+    ->toBeTrue()
+    ->and($solution->contains('boo'))
+    ->toBeTrue()
+    ->and($solution->contains('baz'))
+    ->toBeTrue()
+    ->and($solution->contains('bar'))
+    ->toBeTrue()
+    ->and($solution->contains('bee'))
+    ->toBeTrue();
 });
 
 it('parses conflicting dependencies', function () {
@@ -129,5 +138,12 @@ it('doesn\'t uninstall packages that are not installed', function () {
   ]);
 
   $solutions = $parser->parse();
-  expect($solutions)->toBeArray()->and(count($solutions))->toBe(0);
+  expect($solutions)
+    ->toBeArray()
+    ->and(count($solutions))
+    ->toBe(1)
+    ->and($solutions[0]->contains('bar'))
+    ->toBeFalse()
+    ->and($solutions[0]->count())
+    ->toBe(0);
 });

@@ -77,7 +77,7 @@ class Solver {
     }
 
     // Return the first solution.
-    $solution = $this->requestSolutions[0];
+    $solution = reset($this->requestSolutions);
     return $this->generateOperations($solution);
   }
 
@@ -164,7 +164,8 @@ class Solver {
     ) {
       return Operation::install(
         $request->getName(),
-        ((string) $request->getVersion()) ?: null
+        ((string) $request->getVersion()) ?: null,
+        $request->getPackageId()
       );
     } elseif ($request->getType() === ParsedRequest::TYPE_UNINSTALL) {
       return Operation::uninstall($request->getName());

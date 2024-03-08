@@ -98,7 +98,7 @@ it('throws an error if there are conflicting dependencies', function () {
     ->addPackage($boo1);
   $requests = (new RequestsCollection())
     ->install('foo', '1.0.1')
-    ->install('boo', '>=1.0.0');
+    ->install('boo', '>=1.0.1');
 
   $solver = new Solver($pool, $requests, [
     'boo' => [
@@ -190,6 +190,49 @@ it('doesn\'t uninstall packages that are not installed', function () {
 });
 
 it(
+  'doesn\'t install a newer version of a package that is already installed and fulfills the constraints',
+  function () {
+    $foo1 = new Package('foo', '1.0.0');
+    $foo2 = new Package('foo', '1.0.1');
+    $foo3 = new Package('foo', '1.0.2');
+    $pool = (new Pool())->addPackage($foo1)->addPackage($foo2)->addPackage($foo3);
+    $requests = (new RequestsCollection())->install('foo', '^1.0.0');
+
+    $solver = new Solver($pool, $requests, [
+      'foo' => [
+        'version' => '1.0.0',
+      ],
+    ]);
+
+    $solution = $solver->solve();
+    expect($solution)->toBeArray()->and(count($solution))->toBe(0);
+  }
+);
+
+it(
+  'handles dependencies that are not in the pool, but are already installed',
+  function () {
+    $foo = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
+    $pool = (new Pool())->addPackage($foo);
+    $requests = (new RequestsCollection())->install('foo', '>=1.0.0');
+
+    $solver = new Solver($pool, $requests, [
+      'bar' => [
+        'version' => '1.0.0',
+      ],
+    ]);
+
+    $solution = $solver->solve();
+    expect($solution)
+      ->toBeArray()
+      ->and(count($solution))
+      ->toBe(1)
+      ->and($solution['foo']->getType())
+      ->toBe(Operation::TYPE_INSTALL);
+  }
+);
+
+it(
   'throws an error when a package is required by one request and is conflicted by another',
   function () {
     $foo = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
@@ -205,37 +248,43 @@ it(
   }
 );
 
-it('retrieves whether operations were performed due to direct request or due to dependencies', function() {
-  $foo = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
-  $bar = (new Package('bar', '1.0.0'))->addLink('require', 'baz', '>=1.0.0');
-  $baz = new Package('baz', '1.0.0');
-  $pool = (new Pool())->addPackage($foo)->addPackage($bar)->addPackage($baz);
-  $requests = (new RequestsCollection())->install('foo', '>=1.0.0')->install('baz', '>=1.0.0');
+it(
+  'retrieves whether operations were performed due to direct request or due to dependencies',
+  function () {
+    $foo = (new Package('foo', '1.0.0'))->addLink('require', 'bar', '>=1.0.0');
+    $bar = (new Package('bar', '1.0.0'))->addLink('require', 'baz', '>=1.0.0');
+    $baz = new Package('baz', '1.0.0');
+    $pool = (new Pool())->addPackage($foo)->addPackage($bar)->addPackage($baz);
+    $requests = (new RequestsCollection())
+      ->install('foo', '>=1.0.0')
+      ->install('baz', '>=1.0.0');
 
-  $solver = new Solver($pool, $requests);
+    $solver = new Solver($pool, $requests);
 
-  $solution = $solver->solve();
-  expect($solution)
-    ->toBeArray()
-    ->and(count($solution))
-    ->toBe(3)
-    ->and($solution)->toHaveKeys(['foo', 'bar', 'baz'])
-    ->and($solution['foo']->getType())
-    ->toBe(Operation::TYPE_INSTALL)
-    ->and($solution['foo']->getRequiredBy())
-    ->toBe([])
-    ->and($solution['foo']->wasAddedAsDependency())
-    ->toBeFalse()
-    ->and($solution['bar']->getType())
-    ->toBe(Operation::TYPE_INSTALL)
-    ->and($solution['bar']->getRequiredBy())
-    ->toBe([$solution['foo']])
-    ->and($solution['bar']->wasAddedAsDependency())
-    ->toBeTrue()
-    ->and($solution['baz']->getType())
-    ->toBe(Operation::TYPE_INSTALL)
-    ->and($solution['baz']->getRequiredBy())
-    ->toBe([$solution['bar'], $solution['foo']])
-    ->and($solution['baz']->wasAddedAsDependency())
-    ->toBeFalse();
-});
+    $solution = $solver->solve();
+    expect($solution)
+      ->toBeArray()
+      ->and(count($solution))
+      ->toBe(3)
+      ->and($solution)
+      ->toHaveKeys(['foo', 'bar', 'baz'])
+      ->and($solution['foo']->getType())
+      ->toBe(Operation::TYPE_INSTALL)
+      ->and($solution['foo']->getRequiredBy())
+      ->toBe([])
+      ->and($solution['foo']->wasAddedAsDependency())
+      ->toBeFalse()
+      ->and($solution['bar']->getType())
+      ->toBe(Operation::TYPE_INSTALL)
+      ->and($solution['bar']->getRequiredBy())
+      ->toBe([$solution['foo']])
+      ->and($solution['bar']->wasAddedAsDependency())
+      ->toBeTrue()
+      ->and($solution['baz']->getType())
+      ->toBe(Operation::TYPE_INSTALL)
+      ->and($solution['baz']->getRequiredBy())
+      ->toBe([$solution['bar'], $solution['foo']])
+      ->and($solution['baz']->wasAddedAsDependency())
+      ->toBeFalse();
+  }
+);

@@ -52,22 +52,6 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
   }
 
   /**
-   * Create a new collection with the given environment.
-   *
-   * @param Pool $pool The pool of packages
-   * @param array<non-empty-string, array{
-   *   version: Version|string,
-   * }> $installed The installed packages
-   * @return static
-   */
-  public function withEnvironment(Pool $pool, array $installed = []): static {
-    $new = clone $this;
-    $new->pool = $pool;
-    $new->installed = $installed;
-    return $new;
-  }
-
-  /**
    * Sort the steps and return a new collection with the sorted steps. Needs the environment to be set first.
    *
    * @return static
@@ -96,28 +80,5 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
     } catch (IncompatiblePackageRequestsException) {
       return false;
     }
-  }
-
-  /**
-   * Convert the requests to an array
-   *
-   * @return array<non-empty-string, array{
-   *   name: non-empty-string,
-   *   packageId?: int|null,
-   *   type: Request::TYPE_*,
-   *   versionConstraint?: string|null,
-   *   requiredBy?: array<non-empty-string, array{
-   *     name: non-empty-string,
-   *     packageId?: int|null,
-   *     type: Request::TYPE_*,
-   *     versionConstraint?: string|null,
-   *   }>,
-   * }>
-   */
-  public function toArray(): array {
-    return array_map(
-      static fn(ParsedRequest $request) => $request->toArray(),
-      $this->requests
-    );
   }
 }

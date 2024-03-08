@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace SimpleDep\Solver;
 
+use Exception;
 use RuntimeException;
-use SimpleDep\DependencySorter\DependencySorter;
+use SimpleDep\Package\Package;
 use SimpleDep\Pool\Pool;
 use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
@@ -48,6 +49,13 @@ class BulkParser {
   protected bool $throwExceptions = true;
 
   /**
+   * Whether the current level is the first level of requests.
+   *
+   * @var bool
+   */
+  protected bool $isFirstLevel = true;
+
+  /**
    * @param Pool $pool The pool of packages
    * @param RequestsCollection $requests The requests
    * @param array<non-empty-string, array{
@@ -59,10 +67,29 @@ class BulkParser {
     RequestsCollection $requests,
     array $installed = []
   ) {
-    $this->pool = $pool;
-    $this->pool->ensurePackageIds();
     $this->installed = $installed;
+    $this->pool = $pool;
+
+    $this->addInstalledPackagesToPool();
+
+    $this->pool->ensurePackageIds();
     $this->requests = $requests;
+  }
+
+  /**
+   * Add the installed packages to the pool, if they are not already there.
+   *
+   * @return void
+   */
+  protected function addInstalledPackagesToPool(): void {
+    foreach ($this->installed as $name => $data) {
+      if ($this->pool->getPackageByVersion($name, $data['version'])) {
+        continue;
+      }
+
+      $package = new Package($name, $data['version']);
+      $this->pool->addPackage($package);
+    }
   }
 
   /**
@@ -77,8 +104,20 @@ class BulkParser {
   }
 
   /**
+   * Set whether the current level is the first level of requests.
+   *
+   * @param bool $isFirstLevel
+   * @return static
+   */
+  protected function setIsFirstLevel(bool $isFirstLevel): static {
+    $this->isFirstLevel = $isFirstLevel;
+    return $this;
+  }
+
+  /**
    * Parse the dependencies and return the valid solutions.
    *
+   * @param bool $isFirstLevel Whether the current level is the first level of requests.
    * @return ParsedRequestsCollection[]
    * @throws ParserException
    */
@@ -93,14 +132,6 @@ class BulkParser {
     if (!count($solutions) && $this->throwExceptions) {
       throw ParserException::noSolution();
     }
-
-    // Now filter out the solutions that have no requests.
-    $solutions = array_values(
-      array_filter(
-        $solutions,
-        static fn(ValidatedParsedRequestsCollection $solution) => (bool) count($solution)
-      )
-    );
 
     return $solutions;
   }
@@ -137,19 +168,30 @@ class BulkParser {
       );
     }
 
-    // Remove unnecessary requests from the solutions.
-    $solutions = array_map(
-      fn(ValidatedParsedRequestsCollection $solution) => $this->removeUnnecessaryRequests(
-        $solution
-      ),
-      $solutions
-    );
+    // If it's the first level, do some extra operations.
+    // For secondary levels, these operations are not only unnecessary, but actually harmful, because they can hide conflicts or other issues.
+    // We need to apply them only to the first level, where we have the full set of requests.
+    if ($this->isFirstLevel) {
+      // Remove unnecessary requests from the solutions.
+      $solutions = array_map(
+        fn(
+          ValidatedParsedRequestsCollection $solution
+        ) => $this->removeUnnecessaryRequests($solution),
+        $solutions
+      );
+      $solutions = array_map(
+        fn(
+          ValidatedParsedRequestsCollection $solution
+        ) => $this->removeUnnecessaryRequests($solution),
+        $solutions
+      );
 
-    // Sort the steps.
-    $solutions = array_map(
-      fn(ValidatedParsedRequestsCollection $solution) => $solution->sortSteps(),
-      $solutions
-    );
+      // Sort the steps.
+      $solutions = array_map(
+        fn(ValidatedParsedRequestsCollection $solution) => $solution->sortSteps(),
+        $solutions
+      );
+    }
 
     return array_values($solutions);
   }
@@ -214,12 +256,14 @@ class BulkParser {
    *
    * @param non-empty-string $name
    * @param Constraint|null $versionConstraint
+   * @param bool $prioritizeInstalledVersion Whether to prioritize the installed version, if available.
    * @return ParsedRequestsCollection[]
    * @throws ParserException|RuntimeException
    */
   protected function parseInstallRequest(
     string $name,
-    ?Constraint $versionConstraint = null
+    ?Constraint $versionConstraint = null,
+    bool $prioritizeInstalledVersion = true
   ): array {
     $packages = $this->pool->getPackageByConstraint($name, $versionConstraint);
     if (!count($packages) && $this->throwExceptions) {
@@ -227,6 +271,22 @@ class BulkParser {
     }
 
     $solutions = [];
+
+    // If the package is already installed, keep the installed version at the top.
+    if ($prioritizeInstalledVersion && isset($this->installed[$name]['version'])) {
+      $installedVersion = $this->installed[$name]['version'];
+      usort($packages, static function (Package $a, Package $b) use ($installedVersion) {
+        if ((string) $a->getVersion() === (string) $installedVersion) {
+          return -1;
+        }
+        if ((string) $b->getVersion() === (string) $installedVersion) {
+          return 1;
+        }
+        return 0;
+      });
+    }
+
+    // Add solutions for each package.
     foreach ($packages as $package) {
       try {
         $requests = new ParsedRequestsCollection();
@@ -254,9 +314,10 @@ class BulkParser {
           continue;
         }
 
-        $linkSolutions = (new self($this->pool, $linkRequests, $this->installed))
-          ->setThrowExceptions(false)
-          ->parse();
+        // Parse the second level of requests.
+        $linksParser = new self($this->pool, $linkRequests, $this->installed);
+        $linksParser->setIsFirstLevel(false);
+        $linkSolutions = $linksParser->setThrowExceptions(false)->parse();
         foreach ($linkSolutions as $linkSolution) {
           $solutions[] = $requests->merge($linkSolution);
         }
@@ -300,7 +361,7 @@ class BulkParser {
         Constraint::parseOrNull('^' . $installedVersion) ?? Constraint::default();
     }
 
-    return $this->parseInstallRequest($name, $versionConstraint);
+    return $this->parseInstallRequest($name, $versionConstraint, false);
   }
 
   /**

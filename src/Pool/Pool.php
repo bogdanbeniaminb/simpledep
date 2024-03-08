@@ -115,6 +115,25 @@ class Pool {
   }
 
   /**
+   * Get a package by name and version
+   *
+   * @param non-empty-string $name
+   * @param Version|string $version
+   * @return Package|null
+   */
+  public function getPackageByVersion(string $name, string|Version $version): ?Package {
+    $packages = $this->getPackageByConstraint(
+      $name,
+      Constraint::parse((string) $version)
+    );
+    if (!empty($packages)) {
+      return reset($packages);
+    }
+
+    return null;
+  }
+
+  /**
    * Get the latest package by name
    *
    * @param non-empty-string $name
