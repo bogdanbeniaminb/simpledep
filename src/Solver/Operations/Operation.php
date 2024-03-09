@@ -131,7 +131,7 @@ class Operation {
    * @param Operation[] $requiredBy The packages that require this package
    * @return $this
    */
-  public function setRequiredBy(array $requiredBy): static {
+  public function setRequiredBy(array $requiredBy) {
     $this->requiredBy = $requiredBy;
     return $this;
   }
@@ -142,7 +142,7 @@ class Operation {
    * @param bool $wasAddedAsDependency Whether the package is installed as a dependency
    * @return $this
    */
-  public function setWasAddedAsDependency(bool $wasAddedAsDependency): static {
+  public function setWasAddedAsDependency(bool $wasAddedAsDependency) {
     $this->wasAddedAsDependency = $wasAddedAsDependency;
     return $this;
   }
@@ -162,7 +162,7 @@ class Operation {
    * @param int|null $packageId The ID of the package
    * @return $this
    */
-  public function setPackageId(?int $packageId): static {
+  public function setPackageId(?int $packageId) {
     $this->packageId = $packageId;
     return $this;
   }

@@ -19,7 +19,7 @@ interface RequestInterface {
   public function __construct(
     int $type,
     string $name,
-    string|Version|Constraint|null $versionConstraint = null
+    $versionConstraint = null
   );
 
   /**
@@ -28,7 +28,7 @@ interface RequestInterface {
    * @param RequestInterface $request
    * @return static
    */
-  public static function fromRequest(RequestInterface $request): static;
+  public static function fromRequest(RequestInterface $request);
 
   /**
    * Get the type of the request

@@ -8,6 +8,14 @@ use z4kn4fein\SemVer\Constraints\Constraint;
 use z4kn4fein\SemVer\Version;
 
 class Request implements RequestInterface {
+  /**
+   * @var int
+   */
+  protected int $type;
+  /**
+   * @var non-empty-string
+   */
+  protected string $name;
   public const TYPE_INSTALL = 1;
   public const TYPE_UPDATE = 2;
   public const TYPE_UNINSTALL = 4;
@@ -28,10 +36,12 @@ class Request implements RequestInterface {
    * @param string|Version|Constraint|null $versionConstraint
    */
   public function __construct(
-    protected int $type,
-    protected string $name,
-    string|Version|Constraint|null $versionConstraint = null
+    int $type,
+    string $name,
+    $versionConstraint = null
   ) {
+    $this->type = $type;
+    $this->name = $name;
     if (!empty($versionConstraint)) {
       if (is_string($versionConstraint)) {
         $versionConstraint = Constraint::parse($versionConstraint);
@@ -96,7 +106,7 @@ class Request implements RequestInterface {
    * @param RequestInterface $request
    * @return static
    */
-  public static function fromRequest(RequestInterface $request): static {
+  public static function fromRequest(RequestInterface $request) {
     return new static(
       // @phpstan-ignore-next-line
       $request->getType(),

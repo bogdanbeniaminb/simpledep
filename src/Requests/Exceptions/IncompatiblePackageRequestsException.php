@@ -84,7 +84,7 @@ class IncompatiblePackageRequestsException extends Exception {
     array $requests,
     Pool $pool,
     array $installed
-  ): static {
+  ) {
     $this->incompatibleRequests = [];
     foreach ($requests as $incompatibleRequest) {
       $this->incompatibleRequests[] = [

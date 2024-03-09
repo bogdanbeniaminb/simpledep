@@ -43,7 +43,7 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
     ParsedRequestsCollection $collection,
     Pool $pool,
     array $installed = []
-  ): static {
+  ) {
     $new = new static($collection->getRequests());
     $new->pool = $pool;
     $new->installed = $installed;
@@ -55,7 +55,7 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
    *
    * @return static
    */
-  public function sortSteps(): static {
+  public function sortSteps() {
     return (new DependencySorter(
       $this,
       $this->pool ?: new Pool(),

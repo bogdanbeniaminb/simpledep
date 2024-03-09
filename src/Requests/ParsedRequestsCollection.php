@@ -27,7 +27,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    * @param Package $package
    * @return $this
    */
-  public function install(Package $package): static {
+  public function install(Package $package) {
     if (!$package->getId()) {
       throw new RuntimeException('The package must have an ID');
     }
@@ -42,7 +42,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    * @param non-empty-string $name
    * @return $this
    */
-  public function uninstall(string $name): static {
+  public function uninstall(string $name) {
     $this->requests[] = new ParsedRequest(Request::TYPE_UNINSTALL, $name);
     return $this;
   }
@@ -53,7 +53,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    * @param Request $request
    * @return $this
    */
-  public function addRequest(Request $request): static {
+  public function addRequest(Request $request) {
     if (!($request instanceof ParsedRequest)) {
       $request = ParsedRequest::fromRequest($request);
     }
@@ -71,7 +71,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    * }> $installed The installed packages
    * @return static A new collection with the gathered dependencies.
    */
-  public function gatherDependencies(Pool $pool, array $installed = []): static {
+  public function gatherDependencies(Pool $pool, array $installed = []) {
     $new = clone $this;
     $gatherer = new DependencyGatherer($new, $pool, $installed);
     $gatherer->gatherDependencies();
@@ -112,7 +112,7 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
    * @param static $otherRequests
    * @return static|null The new collection, or null if the requests are not compatible.
    */
-  public function mergeIfCompatible($otherRequests): ?static {
+  public function mergeIfCompatible($otherRequests): ?self {
     if (!($otherRequests instanceof static)) {
       throw new InvalidArgumentException(
         'The requests must be an instance of ' . static::class

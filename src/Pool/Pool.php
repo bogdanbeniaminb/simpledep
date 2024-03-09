@@ -30,7 +30,7 @@ class Pool {
    * @param Package $package
    * @return $this
    */
-  public function addPackage(Package $package): static {
+  public function addPackage(Package $package) {
     $this->packages[$package->getName()] ??= [];
     $this->packages[$package->getName()][] = $package;
     return $this;
@@ -90,7 +90,7 @@ class Pool {
    */
   public function getPackagesByConstraint(
     string $name,
-    Constraint|string|null $constraint = null
+    $constraint = null
   ): array {
     $packages = $this->getPackageVersions($name);
 
@@ -121,7 +121,7 @@ class Pool {
    * @param Version|string $version
    * @return Package|null
    */
-  public function getPackageByVersion(string $name, string|Version $version): ?Package {
+  public function getPackageByVersion(string $name, $version): ?Package {
     $packages = $this->getPackageVersions($name);
     foreach ($packages as $package) {
       if ((string) $package->getVersion() === (string) $version) {
@@ -149,7 +149,7 @@ class Pool {
    *
    * @return $this
    */
-  public function ensurePackageIds(): static {
+  public function ensurePackageIds() {
     $id = $this->detectStartingFakePackageId();
     foreach ($this->getPackages() as $package) {
       if ($package->getId()) {

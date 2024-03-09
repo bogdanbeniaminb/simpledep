@@ -103,7 +103,7 @@ class BulkParser {
    * @param bool $throwExceptions
    * @return static
    */
-  public function setThrowExceptions(bool $throwExceptions): static {
+  public function setThrowExceptions(bool $throwExceptions) {
     $this->throwExceptions = $throwExceptions;
     return $this;
   }

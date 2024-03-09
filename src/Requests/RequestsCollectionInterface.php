@@ -27,7 +27,7 @@ interface RequestsCollectionInterface extends IteratorAggregate, Countable {
    * @param TRequest $request
    * @return $this
    */
-  public function addRequest(Request $request): static;
+  public function addRequest(Request $request);
 
   /**
    * Get the requests

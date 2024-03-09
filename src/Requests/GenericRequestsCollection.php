@@ -39,7 +39,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @param TRequest $request
    * @return $this
    */
-  public function addRequest(Request $request): static {
+  public function addRequest(Request $request) {
     $this->requests[] = $request;
     return $this;
   }
@@ -84,7 +84,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @param int|null $length
    * @return static
    */
-  public function slice(int $offset, ?int $length = null): static {
+  public function slice(int $offset, ?int $length = null) {
     $new = static::copy($this);
     $new->requests = array_slice($this->requests, $offset, $length);
     return $new;
@@ -104,7 +104,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
   public static function copy(
     GenericRequestsCollection $collection,
     ?array $requests = null
-  ): static {
+  ) {
     $new = clone $collection;
     if ($requests !== null) {
       $new->requests = $requests;
@@ -118,7 +118,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @param TRequest ...$requests
    * @return static
    */
-  public function append(Request ...$requests): static {
+  public function append(Request ...$requests) {
     $new = static::copy($this);
     $new->requests = array_merge($new->requests, $requests);
     return $new;
@@ -130,7 +130,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @param static $requests
    * @return static
    */
-  public function merge($requests): static {
+  public function merge($requests) {
     if (!($requests instanceof static)) {
       throw new InvalidArgumentException(
         'The requests must be an instance of ' . static::class
@@ -147,9 +147,9 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @phpstan-param callable(TRequest): bool $callback
    * @return static
    */
-  public function filter(callable $callback): static {
+  public function filter(callable $callback) {
     $new = static::copy($this);
-    $new->requests = array_values(array_filter($this->requests, $callback));
+    $new->requests = array_values(array_filter($this->requests, $callback === null ? fn($value, $key): bool => !empty($value) : $callback, $callback === null ? ARRAY_FILTER_USE_BOTH : 0));
     return $new;
   }
 
@@ -220,7 +220,7 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    *
    * @return static
    */
-  public function unique(): static {
+  public function unique() {
     /** @var TRequest[] $newRequests */
     $newRequests = [];
     foreach ($this->requests as $request) {
