@@ -6,7 +6,6 @@ namespace SimpleDep\Requests;
 
 use SimpleDep\DependencySorter\DependencySorter;
 use SimpleDep\Pool\Pool;
-use SimpleDep\Requests\Exceptions\IncompatiblePackageRequestsException;
 use SimpleDep\Solver\RequestCompatibilityChecker;
 use z4kn4fein\SemVer\Version;
 

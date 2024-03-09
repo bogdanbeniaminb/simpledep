@@ -412,7 +412,7 @@ class BulkParser {
         $installedVersion = Version::parse($installedVersion);
       }
       if ($installedVersion && $request->getVersion()) {
-        return $installedVersion->isEqual($request->getVersion());
+        return (string) $installedVersion === (string) $request->getVersion();
       }
     }
 

@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace SimpleDep\Solver;
 
-use SimpleDep\Package\Link;
-use SimpleDep\Package\Package;
 use SimpleDep\Pool\Pool;
-use SimpleDep\Requests\Exceptions\IncompatiblePackageRequestsException;
 use SimpleDep\Requests\ParsedRequest;
 use SimpleDep\Requests\ParsedRequestsCollection;
 use z4kn4fein\SemVer\Version;
@@ -100,7 +97,6 @@ class RequestCompatibilityChecker {
    *
    * @param ParsedRequest[] $requests
    * @return bool
-   * @throws IncompatiblePackageRequestsException
    */
   protected function checkGroup(array $requests): bool {
     // To be compatible: all the requests must be of the same type and same package ID.
