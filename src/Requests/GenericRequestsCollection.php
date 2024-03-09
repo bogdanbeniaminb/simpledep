@@ -95,16 +95,6 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
   }
 
   /**
-   * Clone the requests
-   */
-  public function __clone() {
-    $this->requests = array_map(
-      static fn(Request $request) => clone $request,
-      $this->requests
-    );
-  }
-
-  /**
    * Clone the collection and optionally replace the requests.
    *
    * @param static $collection
@@ -197,13 +187,32 @@ class GenericRequestsCollection implements RequestsCollectionInterface {
    * @return bool
    */
   public function contains(string $name, ?int $type = null): bool {
-    return !empty(
-      array_filter(
-        $this->requests,
-        static fn(Request $request) => $request->getName() === $name &&
-          ($type === null || $request->getType() === $type)
-      )
-    );
+    foreach ($this->requests as $request) {
+      if (
+        $request->getName() === $name &&
+        ($type === null || $request->getType() === $type)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get a request by name.
+   *
+   * @param string $name
+   * @return TRequest|null
+   */
+  public function getByName(string $name): ?Request {
+    foreach ($this->requests as $request) {
+      if ($request->getName() === $name) {
+        return $request;
+      }
+    }
+
+    return null;
   }
 
   /**

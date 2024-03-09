@@ -70,15 +70,10 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
    * @return bool True if the requests are compatible, false otherwise.
    */
   public function isValid(): bool {
-    try {
-      (new RequestCompatibilityChecker(
-        $this,
-        $this->pool ?: new Pool(),
-        $this->installed
-      ))->validate();
-      return true;
-    } catch (IncompatiblePackageRequestsException) {
-      return false;
-    }
+    return (new RequestCompatibilityChecker(
+      $this,
+      $this->pool ?: new Pool(),
+      $this->installed
+    ))->check();
   }
 }

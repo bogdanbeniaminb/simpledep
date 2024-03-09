@@ -61,16 +61,21 @@ class BulkParser {
    * @param array<non-empty-string, array{
    *   version: Version|string,
    * }> $installed The installed packages
+   * @param bool $isFirstLevel Whether the current level is the first level of requests.
    */
   public function __construct(
     Pool $pool,
     RequestsCollection $requests,
-    array $installed = []
+    array $installed = [],
+    bool $isFirstLevel = true
   ) {
     $this->installed = $installed;
     $this->pool = $pool;
+    $this->isFirstLevel = $isFirstLevel;
 
-    $this->addInstalledPackagesToPool();
+    if ($this->isFirstLevel) {
+      $this->addInstalledPackagesToPool();
+    }
 
     $this->pool->ensurePackageIds();
     $this->requests = $requests;
@@ -104,20 +109,8 @@ class BulkParser {
   }
 
   /**
-   * Set whether the current level is the first level of requests.
-   *
-   * @param bool $isFirstLevel
-   * @return static
-   */
-  protected function setIsFirstLevel(bool $isFirstLevel): static {
-    $this->isFirstLevel = $isFirstLevel;
-    return $this;
-  }
-
-  /**
    * Parse the dependencies and return the valid solutions.
    *
-   * @param bool $isFirstLevel Whether the current level is the first level of requests.
    * @return ParsedRequestsCollection[]
    * @throws ParserException
    */
@@ -144,7 +137,7 @@ class BulkParser {
    * @throws ParserException
    */
   public function getAllSolutions(bool $validOnly = false): array {
-    $solutions = $this->parseRequests($this->requests);
+    $solutions = $this->parseRequests($this->requests, $validOnly);
 
     // Transform the solutions into ValidatedParsedRequestsCollection objects, with the environment set.
     $solutions = array_map(
@@ -179,12 +172,6 @@ class BulkParser {
         ) => $this->removeUnnecessaryRequests($solution),
         $solutions
       );
-      $solutions = array_map(
-        fn(
-          ValidatedParsedRequestsCollection $solution
-        ) => $this->removeUnnecessaryRequests($solution),
-        $solutions
-      );
 
       // Sort the steps.
       $solutions = array_map(
@@ -201,9 +188,13 @@ class BulkParser {
    * Uses backtracking to solve the dependencies.
    *
    * @param RequestsCollection $requests
+   * @param bool $validOnly Whether to return only the valid solutions.
    * @return ParsedRequestsCollection[] Possible solutions.
    */
-  protected function parseRequests(RequestsCollection $requests): array {
+  protected function parseRequests(
+    RequestsCollection $requests,
+    bool $validOnly = true
+  ): array {
     if (!count($requests)) {
       return [];
     }
@@ -212,7 +203,7 @@ class BulkParser {
     $firstRequest = $requests->first();
 
     $currentSolutions = $this->parseRequest($firstRequest);
-    $next = $this->parseRequests($requests->slice(1));
+    $next = $this->parseRequests($requests->slice(1), $validOnly);
     if (!count($next)) {
       return $currentSolutions;
     }
@@ -220,7 +211,17 @@ class BulkParser {
     $result = [];
     foreach ($currentSolutions as $currentSolution) {
       foreach ($next as $nextSolution) {
-        $result[] = $currentSolution->merge($nextSolution);
+        if ($validOnly) {
+          // Don't merge the solutions if they are not compatible.
+          $merged = $currentSolution->mergeIfCompatible($nextSolution);
+          if (!$merged) {
+            continue;
+          }
+        } else {
+          $merged = $currentSolution->merge($nextSolution);
+        }
+
+        $result[] = $merged;
       }
     }
 
@@ -265,7 +266,7 @@ class BulkParser {
     ?Constraint $versionConstraint = null,
     bool $prioritizeInstalledVersion = true
   ): array {
-    $packages = $this->pool->getPackageByConstraint($name, $versionConstraint);
+    $packages = $this->pool->getPackagesByConstraint($name, $versionConstraint);
     if (!count($packages) && $this->throwExceptions) {
       throw ParserException::packageVersionNotFound($name, $versionConstraint);
     }
@@ -315,8 +316,7 @@ class BulkParser {
         }
 
         // Parse the second level of requests.
-        $linksParser = new self($this->pool, $linkRequests, $this->installed);
-        $linksParser->setIsFirstLevel(false);
+        $linksParser = new self($this->pool, $linkRequests, $this->installed, false);
         $linkSolutions = $linksParser->setThrowExceptions(false)->parse();
         foreach ($linkSolutions as $linkSolution) {
           $solutions[] = $requests->merge($linkSolution);

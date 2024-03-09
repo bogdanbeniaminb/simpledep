@@ -60,3 +60,24 @@ it('refuses to install packages without ID', function () {
     new RuntimeException('The package must have an ID')
   );
 });
+
+it('detects incompatible collections for merging', function () {
+  $foo1 = (new Package('foo', '1.0.0'))->setId(1);
+  $foo2 = (new Package('foo', '2.0.0'))->setId(2);
+  $bar1 = (new Package('bar', '1.0.0'))->setId(3);
+  $baz1 = (new Package('baz', '1.0.0'))->setId(4);
+
+  $requests1 = new ParsedRequestsCollection();
+  $requests1->install($foo1)->install($bar1);
+  $requests2 = new ParsedRequestsCollection();
+  $requests2->install($bar1)->install($baz1);
+  $merged = $requests1->mergeIfCompatible($requests2);
+  expect($merged)->toBeInstanceOf(ParsedRequestsCollection::class);
+
+  $requests1 = new ParsedRequestsCollection();
+  $requests1->install($foo1)->install($bar1);
+  $requests2 = new ParsedRequestsCollection();
+  $requests2->install($foo2)->install($bar1)->install($baz1);
+  $merged = $requests1->mergeIfCompatible($requests2);
+  expect($merged)->toBeNull();
+});

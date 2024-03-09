@@ -88,7 +88,7 @@ class Pool {
    * @return Package[]
    * @throws RuntimeException
    */
-  public function getPackageByConstraint(
+  public function getPackagesByConstraint(
     string $name,
     Constraint|string|null $constraint = null
   ): array {
@@ -122,12 +122,11 @@ class Pool {
    * @return Package|null
    */
   public function getPackageByVersion(string $name, string|Version $version): ?Package {
-    $packages = $this->getPackageByConstraint(
-      $name,
-      Constraint::parse((string) $version)
-    );
-    if (!empty($packages)) {
-      return reset($packages);
+    $packages = $this->getPackageVersions($name);
+    foreach ($packages as $package) {
+      if ((string) $package->getVersion() === (string) $version) {
+        return $package;
+      }
     }
 
     return null;

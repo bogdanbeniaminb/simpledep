@@ -106,13 +106,6 @@ class ParsedRequest extends Request {
       ->setVersion($package->getVersion());
   }
 
-  public function __clone() {
-    $this->version = $this->version ? clone $this->version : null;
-    $this->versionConstraint = $this->versionConstraint
-      ? clone $this->versionConstraint
-      : null;
-  }
-
   /**
    * Convert the request to an array
    *

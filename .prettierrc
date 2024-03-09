@@ -13,6 +13,5 @@
   "trailingComma": "es5",
   "trailingCommaPHP": true,
   "braceStyle": "1tbs",
-  "parser": "php",
   "plugins": ["@prettier/plugin-php"]
 }

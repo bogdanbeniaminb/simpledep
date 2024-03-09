@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SimpleDep\Requests;
 
+use InvalidArgumentException;
 use RuntimeException;
 use SimpleDep\DependencySorter\DependencySorter;
 use SimpleDep\Package\Package;
@@ -61,13 +62,6 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
     return $this;
   }
 
-  public function __clone() {
-    $this->requests = array_map(
-      static fn(ParsedRequest $request) => clone $request,
-      $this->requests
-    );
-  }
-
   /**
    * Gather the dependencies of all requests. Returns a new collection with the dependencies filled in.
    *
@@ -82,6 +76,65 @@ class ParsedRequestsCollection extends GenericRequestsCollection {
     $gatherer = new DependencyGatherer($new, $pool, $installed);
     $gatherer->gatherDependencies();
     return $new;
+  }
+
+  /**
+   * Get a simple array of the requests, used for compatibile merging.
+   *
+   * @param ParsedRequest[] $requests The requests to use. If not provided, the collection's requests are used.
+   * @return array<non-empty-string, non-empty-string>
+   */
+  protected function getRequestsForQuickComparison(?array $requests = null): array {
+    $requests ??= $this->requests;
+
+    $results = [];
+    foreach ($requests as $request) {
+      $value = $this->getQuickComparisonValue($request);
+      $results[$request->getName()] = $value;
+    }
+
+    return $results;
+  }
+
+  /**
+   * Get the quick comparison value for a request.
+   *
+   * @param ParsedRequest $request
+   * @return non-empty-string
+   */
+  protected function getQuickComparisonValue(ParsedRequest $request): string {
+    return $request->getType() . '|' . (string) $request->getVersionConstraint();
+  }
+
+  /**
+   * Merge requests into the collection if they are compatible.
+   *
+   * @param static $otherRequests
+   * @return static|null The new collection, or null if the requests are not compatible.
+   */
+  public function mergeIfCompatible($otherRequests): ?static {
+    if (!($otherRequests instanceof static)) {
+      throw new InvalidArgumentException(
+        'The requests must be an instance of ' . static::class
+      );
+    }
+
+    $quickCompare = $this->getRequestsForQuickComparison();
+    $newRequests = $this->requests;
+
+    foreach ($otherRequests->requests as $request) {
+      $key = $request->getName();
+      if (
+        isset($quickCompare[$key]) &&
+        $quickCompare[$key] !== $this->getQuickComparisonValue($request)
+      ) {
+        return null;
+      }
+
+      $newRequests[] = $request;
+    }
+
+    return static::copy($this, $newRequests);
   }
 
   /**

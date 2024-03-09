@@ -133,7 +133,7 @@ class SimpleDependencySorter {
     $missingDeps = [];
 
     // Go through the dependencies of the item and check if they are in the added list. If they are not, add them to the missing dependencies list.
-    $addedIds = array_map(fn($item) => $item['id'], $this->sorted);
+    $addedIds = array_map(static fn($item) => $item['id'], $this->sorted);
     $missingIds = array_diff($item['dependencies'] ?? [], $addedIds);
     foreach ($this->remaining as $remainingItem) {
       if (in_array($remainingItem['id'], $missingIds)) {

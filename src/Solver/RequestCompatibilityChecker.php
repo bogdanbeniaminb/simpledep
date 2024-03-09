@@ -64,28 +64,17 @@ class RequestCompatibilityChecker {
   }
 
   /**
-   * Check the compatibility of the requests.
+   * Validate the compatibility of the requests.
    *
    * @return bool
    */
   public function check(): bool {
-    try {
-      $this->validate();
-      return true;
-    } catch (IncompatiblePackageRequestsException $e) {
-      return false;
-    }
-  }
-
-  /**
-   * Validate the compatibility of the requests.
-   *
-   * @return bool
-   * @throws IncompatiblePackageRequestsException
-   */
-  public function validate(): bool {
     // Group the requests by name.
     $requests = $this->requests->getRequests();
+    if (count($requests) <= 1) {
+      return true;
+    }
+
     $groupedRequests = [];
     foreach ($requests as $request) {
       $groupedRequests[$request->getName()] ??= [];
@@ -94,7 +83,13 @@ class RequestCompatibilityChecker {
 
     // Check the compatibility of each group of requests.
     foreach ($groupedRequests as $requests) {
-      $this->checkGroup($requests);
+      if (count($requests) === 1) {
+        continue;
+      }
+
+      if (!$this->checkGroup($requests)) {
+        return false;
+      }
     }
 
     return true;
@@ -108,96 +103,26 @@ class RequestCompatibilityChecker {
    * @throws IncompatiblePackageRequestsException
    */
   protected function checkGroup(array $requests): bool {
-    $types = array_map(
-      static fn(ParsedRequest $request) => $request->getType(),
-      $requests
-    );
-    $packageIds = array_map(
-      static fn(ParsedRequest $request) => $request->getPackageId(),
-      $requests
-    );
-
-    // If the requests are not of the same type, they are not compatible.
-    if (count(array_unique($types)) !== 1) {
-      throw IncompatiblePackageRequestsException::incompatibleActions(
-        $requests,
-        $this->pool,
-        $this->installed
-      );
+    // To be compatible: all the requests must be of the same type and same package ID.
+    $packageIds = [];
+    foreach ($requests as $request) {
+      $packageId = $request->getPackageId();
+      $packageIds[$packageId] = $packageId;
+      if (count($packageIds) > 1) {
+        return false;
+      }
     }
 
-    // To be compatible: all the requests must be of the same type and same package ID.
-    if (count(array_unique($packageIds)) > 1) {
-      throw IncompatiblePackageRequestsException::incompatibleVersions(
-        $requests,
-        $this->pool,
-        $this->installed
-      );
+    // If the requests are not of the same type, they are not compatible.
+    $types = [];
+    foreach ($requests as $request) {
+      $type = $request->getType();
+      $types[$type] = $type;
+      if (count($types) > 1) {
+        return false;
+      }
     }
 
     return true;
-  }
-
-  /**
-   * Parse the packages that require the given package and version.
-   *
-   * @param ParsedRequest $request The request to check
-   * @return array<array{
-   *   package: non-empty-string,
-   *   constraint: string|null,
-   *   type: key-of<Package::SUPPORTED_LINK_TYPES>,
-   * }>
-   */
-  protected function parseRequiredBy(ParsedRequest $request): array {
-    $requiredBy = $request->getRequiredBy();
-    $results = [];
-
-    foreach ($requiredBy as $request) {
-      $packageId = $request->getPackageId();
-      $package = $this->pool->getPackageById($packageId);
-      if (!$package) {
-        continue;
-      }
-
-      $link = $package->getLinkByName($package->getName());
-      if (!$link) {
-        continue;
-      }
-
-      // Check if the link is compatible with the request for uninstalling the package.
-      if (
-        in_array($link['type'], [
-          Link::TYPE_CONFLICT,
-          Link::TYPE_PROVIDE,
-          Link::TYPE_REPLACE,
-        ]) &&
-        $request->getType() !== ParsedRequest::TYPE_UNINSTALL
-      ) {
-        continue;
-      }
-
-      // Check if the link is compatible with the request for installing the package.
-      if (
-        in_array($link['type'], [Link::TYPE_REQUIRE, Link::TYPE_REQUIRE_DEV]) &&
-        $request->getType() !== ParsedRequest::TYPE_INSTALL
-      ) {
-        continue;
-      }
-
-      // If the link has a version constraint, check if it is compatible.
-      $constraint = $link['versionConstraint'] ?? null;
-      $version = $request->getVersion();
-      if ($constraint && (!$version || !$constraint->isSatisfiedBy($version))) {
-        continue;
-      }
-
-      $results[] = [
-        'package' => $package->getName(),
-        'constraint' => ((string) $link['versionConstraint']) ?: null,
-        'type' => $link['type'],
-      ];
-    }
-
-    return $results;
   }
 }

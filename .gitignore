@@ -5,3 +5,6 @@ node_modules
 coverage
 .phpunit.result.cache
 rector-local
+cachegrind.out.*
+tests/Feature/Complex/simpledep.php
+**/.DS_Store
