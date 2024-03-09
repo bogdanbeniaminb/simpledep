@@ -36,7 +36,7 @@ class ParsedRequest extends Request {
    * @param int|null $packageId
    * @return $this
    */
-  public function setPackageId(?int $packageId): static {
+  public function setPackageId(?int $packageId) {
     $this->packageId = $packageId;
     return $this;
   }
@@ -56,7 +56,7 @@ class ParsedRequest extends Request {
    * @param Version|null $version
    * @return $this
    */
-  public function setVersion(?Version $version): static {
+  public function setVersion(?Version $version) {
     $this->version = $version;
     return $this;
   }
@@ -76,7 +76,7 @@ class ParsedRequest extends Request {
    * @param ParsedRequest[] $requiredBy
    * @return $this
    */
-  public function setRequiredBy(array $requiredBy): static {
+  public function setRequiredBy(array $requiredBy) {
     $this->requiredBy = $requiredBy;
     return $this;
   }
@@ -96,7 +96,7 @@ class ParsedRequest extends Request {
    * @param Package $package
    * @return static
    */
-  public static function install(Package $package): static {
+  public static function install(Package $package) {
     return (new static(
       Request::TYPE_INSTALL,
       $package->getName(),

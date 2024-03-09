@@ -14,17 +14,29 @@ use z4kn4fein\SemVer\Version;
 
 class DependencyGatherer {
   /**
+   * @var ParsedRequestsCollection
+   */
+  protected ParsedRequestsCollection $requests;
+  /**
+   * @var Pool
+   */
+  protected Pool $pool;
+  /**
+   * @var array<non-empty-string, array{version: (Version | string)}>
+   */
+  protected array $installed = [];
+  /**
    * @param ParsedRequestsCollection $requests The requests
    * @param Pool $pool The pool of packages
    * @param array<non-empty-string, array{
    *   version: Version|string,
    * }> $installed The installed packages
    */
-  public function __construct(
-    protected ParsedRequestsCollection $requests,
-    protected Pool $pool,
-    protected array $installed = []
-  ) {
+  public function __construct(ParsedRequestsCollection $requests, Pool $pool, array $installed = [])
+  {
+      $this->requests = $requests;
+      $this->pool = $pool;
+      $this->installed = $installed;
   }
 
   /**

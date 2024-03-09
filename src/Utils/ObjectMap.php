@@ -57,11 +57,11 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
   /**
    * Set a value for the given key
    *
-   * @param TKey $key The key to set
-   * @param TValue $value The value to set
+   * @param mixed $key The key to set
+   * @param mixed $value The value to set
    * @return void
    */
-  public function set(mixed $key, mixed $value): void {
+  public function set($key, $value): void {
     if ($this->useFallback) {
       $this->fallbackMap[] = [
         'key' => $key,
@@ -77,10 +77,10 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
   /**
    * Get the value for the given key
    *
-   * @param TKey $key The key to get
+   * @param mixed $key The key to get
    * @return TValue|null The value for the given key, or null if it does not exist
    */
-  public function get(mixed $key): mixed {
+  public function get($key) {
     if ($this->useFallback) {
       foreach ($this->fallbackMap as $entry) {
         if ($entry['key'] === $key) {
@@ -102,10 +102,10 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
   /**
    * Check if the given key exists
    *
-   * @param TKey $key The key to check
+   * @param mixed $key The key to check
    * @return bool Whether the key exists
    */
-  public function has(mixed $key): bool {
+  public function has($key): bool {
     if ($this->useFallback) {
       foreach ($this->fallbackMap as $entry) {
         if ($entry['key'] === $key) {
@@ -122,10 +122,10 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
   /**
    * Delete the given key
    *
-   * @param TKey $key The key to delete
+   * @param mixed $key The key to delete
    * @return void
    */
-  public function delete(mixed $key): void {
+  public function delete($key): void {
     if ($this->useFallback) {
       foreach ($this->fallbackMap as $i => $entry) {
         if ($entry['key'] === $key) {
@@ -143,41 +143,41 @@ class ObjectMap implements IteratorAggregate, ArrayAccess {
   /**
    * Set a value for the given key
    *
-   * @param TKey $key The key to set
-   * @param TValue $value The value to set
+   * @param mixed $key The key to set
+   * @param mixed $value The value to set
    * @return void
    */
-  public function offsetSet(mixed $key, mixed $value): void {
+  public function offsetSet($key, $value): void {
     $this->set($key, $value);
   }
 
   /**
    * Get the value for the given key
    *
-   * @param TKey $key The key to get
+   * @param mixed $key The key to get
    * @return TValue|null The value for the given key, or null if it does not exist
    */
-  public function offsetGet(mixed $key): mixed {
+  public function offsetGet($key) {
     return $this->get($key);
   }
 
   /**
    * Check if the given key exists
    *
-   * @param TKey $key The key to check
+   * @param mixed $key The key to check
    * @return bool Whether the key exists
    */
-  public function offsetExists(mixed $key): bool {
+  public function offsetExists($key): bool {
     return $this->has($key);
   }
 
   /**
    * Delete the given key
    *
-   * @param TKey $key The key to delete
+   * @param mixed $key The key to delete
    * @return void
    */
-  public function offsetUnset(mixed $key): void {
+  public function offsetUnset($key): void {
     $this->delete($key);
   }
 

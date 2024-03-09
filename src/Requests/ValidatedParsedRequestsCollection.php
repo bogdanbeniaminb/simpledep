@@ -44,7 +44,7 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
     ParsedRequestsCollection $collection,
     Pool $pool,
     array $installed = []
-  ): static {
+  ) {
     $new = new static($collection->getRequests());
     $new->pool = $pool;
     $new->installed = $installed;
@@ -60,7 +60,7 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
    * }> $installed The installed packages
    * @return static
    */
-  public function withEnvironment(Pool $pool, array $installed = []): static {
+  public function withEnvironment(Pool $pool, array $installed = []) {
     $new = clone $this;
     $new->pool = $pool;
     $new->installed = $installed;
@@ -72,7 +72,7 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
    *
    * @return static
    */
-  public function sortSteps(): static {
+  public function sortSteps() {
     return (new DependencySorter(
       $this,
       $this->pool ?: new Pool(),
@@ -93,7 +93,7 @@ class ValidatedParsedRequestsCollection extends ParsedRequestsCollection {
         $this->installed
       ))->validate();
       return true;
-    } catch (IncompatiblePackageRequestsException) {
+    } catch (IncompatiblePackageRequestsException $exception) {
       return false;
     }
   }
